@@ -2,7 +2,6 @@ package com.zivkesten.test
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.lang.Exception
 
 @Entity
 data class ExceptionEntity(

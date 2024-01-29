@@ -120,8 +120,4 @@ class ExceptionCatcher(private val context: Context, private val coroutineScope:
             Log.e("Zivi", "Exception in sendPostRequest", e)
         }
     }
-
-    fun cancelSceduleing() {
-        WorkManager.getInstance(context).cancelAllWorkByTag(TAG);
-    }
 }
