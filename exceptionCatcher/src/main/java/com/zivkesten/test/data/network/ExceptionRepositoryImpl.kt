@@ -1,6 +1,7 @@
 package com.zivkesten.test.data.network
 
 import com.google.gson.Gson
+import com.zivkesten.test.data.network.model.ExceptionReport
 import com.zivkesten.test.util.ExceptionCatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -9,7 +10,7 @@ import java.net.HttpURLConnection
 
 class ExceptionRepositoryImpl(
     private val connectionFactory: ConnectionFactory,
-    private val isEmulator: Boolean? = null
+    private val isEmulator: Boolean? = null // this is for similar web testers
 ): ExceptionRepository {
     private val TAG = ExceptionRepository::class.java.simpleName
 

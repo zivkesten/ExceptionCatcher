@@ -11,8 +11,4 @@ data class ExceptionAdditionalInfo(
     val stackTrace: String,
     val errorMessage: String,
     val screenOrientation: String,
-) {
-    companion object {
-        fun empty() = ExceptionAdditionalInfo("", "", ",", ",", ",", 0, 0, "", "", "")
-    }
-}
+)

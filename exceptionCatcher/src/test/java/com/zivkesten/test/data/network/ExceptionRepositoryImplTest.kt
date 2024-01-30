@@ -2,6 +2,7 @@ package com.zivkesten.test.data.network
 
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
+import com.zivkesten.test.data.network.model.ExceptionReport
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

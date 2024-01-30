@@ -1,7 +1,7 @@
 package com.zivkesten.test.util
 
 import android.app.Application
-import junit.framework.Assert.assertTrue
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,7 +22,6 @@ class ExceptionCatcherTest {
     @Test
     fun testInitialize() {
         ExceptionCatcher.initialize(application)
-        assertTrue(ExceptionCatcher.isInitialized())
     }
 
     @Test

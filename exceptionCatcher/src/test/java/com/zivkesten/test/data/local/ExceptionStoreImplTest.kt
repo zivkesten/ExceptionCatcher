@@ -3,6 +3,7 @@ package com.zivkesten.test.data.local
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.zivkesten.test.additionalInfoMock
 import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -65,11 +66,10 @@ class ExceptionStoreImplTest {
 
     private suspend fun populateExceptions(exceptionsCount: Int) {
         val testException = RuntimeException("Test Exception")
-        val additionalInfo = ExceptionAdditionalInfo.empty()
 
         // Add 10 exceptions
         repeat(exceptionsCount) {
-            exceptionStore.storeException(ExceptionsHelper.create(testException, additionalInfo))
+            exceptionStore.storeException(ExceptionsHelper.create(testException, additionalInfoMock))
         }
     }
 }

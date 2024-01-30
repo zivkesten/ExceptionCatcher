@@ -2,6 +2,7 @@ package com.zivkesten.test.util
 
 import com.nhaarman.mockitokotlin2.argThat
 import com.nhaarman.mockitokotlin2.mock
+import com.zivkesten.test.additionalInfoMock
 import com.zivkesten.test.data.local.ExceptionStore
 import com.zivkesten.test.data.network.ExceptionRepository
 import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
@@ -34,7 +35,7 @@ class ExceptionsHandlerTest {
     fun `handleException should store exception in database`() = runTest {
 
         val testException = RuntimeException("Test Exception")
-        val additionalInfo = ExceptionAdditionalInfo.empty()
+        val additionalInfo = additionalInfoMock
 
         // When
         handler.handleException(testException, additionalInfo)
