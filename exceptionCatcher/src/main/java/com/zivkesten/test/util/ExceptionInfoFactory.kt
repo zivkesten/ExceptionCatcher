@@ -8,7 +8,6 @@ import android.content.res.Configuration
 import android.net.ConnectivityManager
 import android.os.BatteryManager
 import android.util.Log
-import androidx.annotation.VisibleForTesting
 import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
 import java.util.Locale
 

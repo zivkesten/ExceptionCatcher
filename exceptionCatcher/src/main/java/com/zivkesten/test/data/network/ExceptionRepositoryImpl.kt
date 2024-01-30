@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
-import java.net.URL
 
 class ExceptionRepositoryImpl(
     private val connectionFactory: ConnectionFactory,

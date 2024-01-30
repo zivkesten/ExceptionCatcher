@@ -38,7 +38,6 @@ class MainActivity : ComponentActivity() {
     @Preview(showBackground = true)
     @Composable
     private fun MainScreen() {
-        val context = LocalContext.current
         val ipAddress by remember { mutableStateOf("") }
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {

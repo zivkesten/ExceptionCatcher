@@ -1,13 +1,11 @@
 package com.zivkesten.test.util
 
-import android.content.Context
 import com.zivkesten.test.data.local.ExceptionStore
 import com.zivkesten.test.data.local.ExceptionsHelper
 import com.zivkesten.test.data.mapper.ExceptionsMapper.toDomainException
 import com.zivkesten.test.data.network.ExceptionReport
 import com.zivkesten.test.data.network.ExceptionRepository
 import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
-import com.zivkesten.test.util.ExceptionInfoFactory.additionalInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
