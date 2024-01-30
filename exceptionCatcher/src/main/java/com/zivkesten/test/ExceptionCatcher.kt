@@ -1,123 +1,75 @@
 package com.zivkesten.test
-import android.content.Context
-import android.util.Log
-import androidx.room.Room
-import androidx.work.WorkManager
-import com.google.gson.Gson
-import com.zivkesten.test.data.CaughtException
-import com.zivkesten.test.data.ExceptionReport
+
+import android.app.Activity
+import android.app.Application
+import android.os.Build
+import android.os.Bundle
+import android.security.NetworkSecurityPolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.URL
+import kotlinx.coroutines.SupervisorJob
 
-class ExceptionCatcher(private val context: Context, private val coroutineScope: CoroutineScope) {
+/**
+ * ExceptionCatcherInitializer is a utility object designed to initialize the ExceptionCatcher
+ * in an Android application. It registers activity lifecycle callbacks to start and stop
+ * exception reporting based on the app's foreground and background state.
+ *
+ * Usage:
+ * To use ExceptionCatcher in your Android application, call ExceptionCatcherInitializer.initialize(this)
+ * within your Application class's onCreate method. This setup will automatically handle the
+ * lifecycle of exception reporting, starting when the app enters the foreground and stopping
+ * when the app is no longer active (i.e., in the background).
+ *
+ * Note:
+ * This initializer assumes that your application uses a single instance of the Application class
+ * and that it manages the lifecycle of your activities correctly. If your app's architecture
+ * differs significantly from this (e.g., using multiple processes), additional integration steps
+ * might be required.
+ */
+object ExceptionCatcher {
+    lateinit var exceptionsHandler: ExceptionsHandler
+    var ipAddress: String? = null
+    fun initialize(application: Application) {
+        exceptionsHandler = ExceptionsHandler(application, CoroutineScope(SupervisorJob() + Dispatchers.IO))
 
-    private val TAG = "ExceptionCatcher"
-
-    private val exceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
-
-    private val db: AppDatabase = Room.databaseBuilder(
-        context.applicationContext,
-        AppDatabase::class.java, "exception-database"
-    ).build()
-
-    init {
-        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
-            // TODO: Change to throwable
-            handleException(Exception(exception.message))
-            exceptionHandler?.uncaughtException(thread, exception)
-        }
-    }
-
-    fun handleException(exception: Exception) {
-        // Store exception details in local storage for later reporting using Room
-        coroutineScope.launch(Dispatchers.IO) {
-            val long = db.exceptionDao().insertException(
-                ExceptionEntity(
-                    timestamp = System.currentTimeMillis(),
-                    exception = exception.message ?: "ASJSH"
-                )
-            )
-            Log.d("Zivi", "insertException ${exception.message} succsess: $long")
-
-        }
-    }
-
-    fun scheduleRegularReports() {
-        Log.d("Zivi", "scheduleRegularReports")
-        coroutineScope.launch(Dispatchers.IO) {
-            while (isActive) {
-                val exceptionsCache = db.exceptionDao().getAllExceptions().map {
-                    CaughtException(
-                        exception = it.exception,
-                        timeStamp = it.timestamp
-                    )
-                }
-                Log.d("Zivi", "exceptionsCache $exceptionsCache")
-
-                try {
-                    sendPostRequest(
-                        ExceptionReport(
-                                exceptions = exceptionsCache,
-                                time = System.currentTimeMillis()
-                        )
-                    )
-
-                    Log.d("Zivi", "Report sent successfully")
-                } catch (e: Exception) {
-                    Log.e("Zivi", "Error sending report", e)
+        application.registerActivityLifecycleCallbacks(
+            object : Application.ActivityLifecycleCallbacks {
+                private var activeActivities = 0
+                override fun onActivityStarted(activity: Activity) {}
+                override fun onActivityResumed(activity: Activity) {}
+                override fun onActivityPaused(activity: Activity) {}
+                override fun onActivityStopped(activity: Activity) {}
+                override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) { }
+                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                    if (activeActivities++ == 0) {
+                        // App enters the foreground
+                        exceptionsHandler.scheduleRegularReports()
+                    }
                 }
 
-                delay(5000) // Delay for one minute
-            }
-        }
-    }
-
-    private suspend fun sendPostRequest(report: ExceptionReport) {
-        try {
-            val gson = Gson()
-            val requestBody = gson.toJson(report)
-
-            Log.w("Zivi", "RequestBody $requestBody")
-            val url = URL("http://10.0.2.2:9000/api/exceptions")
-            (url.openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json")
-                setRequestProperty("Charset", "utf-8")
-                setRequestProperty("Content-Length", requestBody.toByteArray().size.toString())
-
-                outputStream.use { os ->
-                    val input = requestBody.toByteArray(Charsets.UTF_8)
-                    os.write(input, 0, input.size)
-                    os.flush()
-                }
-
-                // Read and handle the response
-                val response = if (responseCode == HttpURLConnection.HTTP_OK) {
-                    inputStream.bufferedReader().use { it.readText() }  // Read response
-                } else {
-                    Log.e("HTTP_ERROR", "Response Code: $responseCode")
-                    null
-                }
-
-                // Check if response is not null and then execute action
-                response?.let {
-                    // Execute your action here
-                    Log.d("Zivi", "Success! Response: $it")
-                    db.exceptionDao().deleteAllExceptions()
-                    // For example, you can parse the response and act based on its content
+                override fun onActivityDestroyed(activity: Activity) {
+                    if (!activity.isChangingConfigurations) {
+                        if (--activeActivities == 0) {
+                            // No more activities in the stack,
+                            // this means the task is done and we can stop sending exceptions to the server
+                            exceptionsHandler.cancelReporting()
+                        }
+                    }
                 }
             }
-        } catch (e: IOException) {
-            Log.e("Zivi", "IOException in sendPostRequest", e)
-        } catch (e: Exception) {
-            Log.e("Zivi", "Exception in sendPostRequest", e)
-        }
+        )
+    }
+
+    fun isEmulator(): Boolean {
+        return (Build.FINGERPRINT.startsWith("google/sdk_gphone")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86"))
+    }
+
+    fun setExternalIpAddress(ipAddress: String) {
+        this.ipAddress = ipAddress
     }
 }
+

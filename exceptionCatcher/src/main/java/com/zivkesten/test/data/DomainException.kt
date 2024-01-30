@@ -1,11 +1,6 @@
-package com.zivkesten.test
+package com.zivkesten.test.data
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity
-data class ExceptionEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+data class DomainException(
     val timestamp: Long,
     val message: String?,
     val deviceModel: String,
@@ -18,3 +13,7 @@ data class ExceptionEntity(
     val stackTrace: String,
     val screenOrientation: String,
 )
+
+
+
+
