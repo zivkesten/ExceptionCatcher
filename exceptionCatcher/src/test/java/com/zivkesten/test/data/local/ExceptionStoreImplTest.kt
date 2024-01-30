@@ -4,7 +4,6 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.zivkesten.test.additionalInfoMock
-import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.*

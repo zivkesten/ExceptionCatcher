@@ -5,7 +5,6 @@ import com.nhaarman.mockitokotlin2.mock
 import com.zivkesten.test.additionalInfoMock
 import com.zivkesten.test.data.local.ExceptionStore
 import com.zivkesten.test.data.network.ExceptionRepository
-import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
 import io.mockk.MockKAnnotations
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope

@@ -22,6 +22,7 @@ class ExceptionCatcherTest {
     @Test
     fun testInitialize() {
         ExceptionCatcher.initialize(application)
+        assertTrue(ExceptionCatcher.isInitialized())
     }
 
     @Test
