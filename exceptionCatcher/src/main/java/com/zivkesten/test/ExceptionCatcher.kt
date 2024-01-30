@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Application
 import android.os.Build
 import android.os.Bundle
-import android.security.NetworkSecurityPolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

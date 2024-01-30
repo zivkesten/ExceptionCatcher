@@ -1,0 +1,721 @@
+Index: exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionCatcher.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.zivkesten.test\nimport android.content.Context\nimport android.util.Log\nimport androidx.room.Room\nimport androidx.work.WorkManager\nimport com.google.gson.Gson\nimport com.zivkesten.test.data.CaughtException\nimport com.zivkesten.test.data.ExceptionReport\nimport kotlinx.coroutines.CoroutineScope\nimport kotlinx.coroutines.Dispatchers\nimport kotlinx.coroutines.delay\nimport kotlinx.coroutines.isActive\nimport kotlinx.coroutines.launch\nimport java.io.IOException\nimport java.net.HttpURLConnection\nimport java.net.URL\n\nclass ExceptionCatcher(private val context: Context, private val coroutineScope: CoroutineScope) {\n\n    private val TAG = \"ExceptionCatcher\"\n\n    private val exceptionHandler = Thread.getDefaultUncaughtExceptionHandler()\n\n    private val db: AppDatabase = Room.databaseBuilder(\n        context.applicationContext,\n        AppDatabase::class.java, \"exception-database\"\n    ).build()\n\n    init {\n        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->\n            // TODO: Change to throwable\n            handleException(Exception(exception.message))\n            exceptionHandler?.uncaughtException(thread, exception)\n        }\n    }\n\n    fun handleException(exception: Exception) {\n        // Store exception details in local storage for later reporting using Room\n        coroutineScope.launch(Dispatchers.IO) {\n            val long = db.exceptionDao().insertException(\n                ExceptionEntity(\n                    timestamp = System.currentTimeMillis(),\n                    exception = exception.message ?: \"ASJSH\"\n                )\n            )\n            Log.d(\"Zivi\", \"insertException ${exception.message} succsess: $long\")\n\n        }\n    }\n\n    fun scheduleRegularReports() {\n        Log.d(\"Zivi\", \"scheduleRegularReports\")\n        coroutineScope.launch(Dispatchers.IO) {\n            while (isActive) {\n                val exceptionsCache = db.exceptionDao().getAllExceptions().map {\n                    CaughtException(\n                        exception = it.exception,\n                        timeStamp = it.timestamp\n                    )\n                }\n                Log.d(\"Zivi\", \"exceptionsCache $exceptionsCache\")\n\n                try {\n                    sendPostRequest(\n                        ExceptionReport(\n                                exceptions = exceptionsCache,\n                                time = System.currentTimeMillis()\n                        )\n                    )\n\n                    Log.d(\"Zivi\", \"Report sent successfully\")\n                } catch (e: Exception) {\n                    Log.e(\"Zivi\", \"Error sending report\", e)\n                }\n\n                delay(5000) // Delay for one minute\n            }\n        }\n    }\n\n    private suspend fun sendPostRequest(report: ExceptionReport) {\n        try {\n            val gson = Gson()\n            val requestBody = gson.toJson(report)\n\n            Log.w(\"Zivi\", \"RequestBody $requestBody\")\n            val url = URL(\"http://10.0.2.2:9000/api/exceptions\")\n            (url.openConnection() as HttpURLConnection).apply {\n                requestMethod = \"POST\"\n                doOutput = true\n                setRequestProperty(\"Content-Type\", \"application/json\")\n                setRequestProperty(\"Charset\", \"utf-8\")\n                setRequestProperty(\"Content-Length\", requestBody.toByteArray().size.toString())\n\n                outputStream.use { os ->\n                    val input = requestBody.toByteArray(Charsets.UTF_8)\n                    os.write(input, 0, input.size)\n                    os.flush()\n                }\n\n                // Read and handle the response\n                val response = if (responseCode == HttpURLConnection.HTTP_OK) {\n                    inputStream.bufferedReader().use { it.readText() }  // Read response\n                } else {\n                    Log.e(\"HTTP_ERROR\", \"Response Code: $responseCode\")\n                    null\n                }\n\n                // Check if response is not null and then execute action\n                response?.let {\n                    // Execute your action here\n                    Log.d(\"Zivi\", \"Success! Response: $it\")\n                    db.exceptionDao().deleteAllExceptions()\n                    // For example, you can parse the response and act based on its content\n                }\n            }\n        } catch (e: IOException) {\n            Log.e(\"Zivi\", \"IOException in sendPostRequest\", e)\n        } catch (e: Exception) {\n            Log.e(\"Zivi\", \"Exception in sendPostRequest\", e)\n        }\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionCatcher.kt b/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionCatcher.kt
+--- a/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionCatcher.kt	(revision 6f94d22a1aa47cc78daa1b5a7031257b46c6f3a7)
++++ b/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionCatcher.kt	(date 1706609984530)
+@@ -1,123 +1,60 @@
+ package com.zivkesten.test
+-import android.content.Context
+-import android.util.Log
+-import androidx.room.Room
+-import androidx.work.WorkManager
+-import com.google.gson.Gson
+-import com.zivkesten.test.data.CaughtException
+-import com.zivkesten.test.data.ExceptionReport
++
++import android.app.Activity
++import android.app.Application
++import android.os.Bundle
+ import kotlinx.coroutines.CoroutineScope
+ import kotlinx.coroutines.Dispatchers
+-import kotlinx.coroutines.delay
+-import kotlinx.coroutines.isActive
+-import kotlinx.coroutines.launch
+-import java.io.IOException
+-import java.net.HttpURLConnection
+-import java.net.URL
+-
+-class ExceptionCatcher(private val context: Context, private val coroutineScope: CoroutineScope) {
+-
+-    private val TAG = "ExceptionCatcher"
+-
+-    private val exceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
++import kotlinx.coroutines.SupervisorJob
+ 
+-    private val db: AppDatabase = Room.databaseBuilder(
+-        context.applicationContext,
+-        AppDatabase::class.java, "exception-database"
+-    ).build()
++/**
++ * ExceptionCatcherInitializer is a utility object designed to initialize the ExceptionCatcher
++ * in an Android application. It registers activity lifecycle callbacks to start and stop
++ * exception reporting based on the app's foreground and background state.
++ *
++ * Usage:
++ * To use ExceptionCatcher in your Android application, call ExceptionCatcherInitializer.initialize(this)
++ * within your Application class's onCreate method. This setup will automatically handle the
++ * lifecycle of exception reporting, starting when the app enters the foreground and stopping
++ * when the app is no longer active (i.e., in the background).
++ *
++ * Note:
++ * This initializer assumes that your application uses a single instance of the Application class
++ * and that it manages the lifecycle of your activities correctly. If your app's architecture
++ * differs significantly from this (e.g., using multiple processes), additional integration steps
++ * might be required.
++ */
++object ExceptionCatcher {
++    lateinit var exceptionsHandler: ExceptionsHandler
++    fun initialize(application: Application) {
++        exceptionsHandler = ExceptionsHandler(application, CoroutineScope(SupervisorJob() + Dispatchers.IO))
+ 
+-    init {
+-        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
+-            // TODO: Change to throwable
+-            handleException(Exception(exception.message))
+-            exceptionHandler?.uncaughtException(thread, exception)
+-        }
+-    }
++        application.registerActivityLifecycleCallbacks(
++            object : Application.ActivityLifecycleCallbacks {
++                private var activeActivities = 0
++                override fun onActivityStarted(activity: Activity) {}
++                override fun onActivityResumed(activity: Activity) {}
++                override fun onActivityPaused(activity: Activity) {}
++                override fun onActivityStopped(activity: Activity) {}
++                override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) { }
++                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
++                    if (activeActivities++ == 0) {
++                        // App enters the foreground
++                        exceptionsHandler.scheduleRegularReports()
++                    }
++                }
+ 
+-    fun handleException(exception: Exception) {
+-        // Store exception details in local storage for later reporting using Room
+-        coroutineScope.launch(Dispatchers.IO) {
+-            val long = db.exceptionDao().insertException(
+-                ExceptionEntity(
+-                    timestamp = System.currentTimeMillis(),
+-                    exception = exception.message ?: "ASJSH"
+-                )
+-            )
+-            Log.d("Zivi", "insertException ${exception.message} succsess: $long")
+-
+-        }
+-    }
+-
+-    fun scheduleRegularReports() {
+-        Log.d("Zivi", "scheduleRegularReports")
+-        coroutineScope.launch(Dispatchers.IO) {
+-            while (isActive) {
+-                val exceptionsCache = db.exceptionDao().getAllExceptions().map {
+-                    CaughtException(
+-                        exception = it.exception,
+-                        timeStamp = it.timestamp
+-                    )
++                override fun onActivityDestroyed(activity: Activity) {
++                    if (!activity.isChangingConfigurations) {
++                        if (--activeActivities == 0) {
++                            // No more activities in the stack,
++                            // this means the task is done and we can stop sending exceptions to the server
++                            exceptionsHandler.cancelReporting()
++                        }
++                    }
+                 }
+-                Log.d("Zivi", "exceptionsCache $exceptionsCache")
+-
+-                try {
+-                    sendPostRequest(
+-                        ExceptionReport(
+-                                exceptions = exceptionsCache,
+-                                time = System.currentTimeMillis()
+-                        )
+-                    )
+-
+-                    Log.d("Zivi", "Report sent successfully")
+-                } catch (e: Exception) {
+-                    Log.e("Zivi", "Error sending report", e)
+-                }
+-
+-                delay(5000) // Delay for one minute
+             }
+-        }
++        )
+     }
+-
+-    private suspend fun sendPostRequest(report: ExceptionReport) {
+-        try {
+-            val gson = Gson()
+-            val requestBody = gson.toJson(report)
+-
+-            Log.w("Zivi", "RequestBody $requestBody")
+-            val url = URL("http://10.0.2.2:9000/api/exceptions")
+-            (url.openConnection() as HttpURLConnection).apply {
+-                requestMethod = "POST"
+-                doOutput = true
+-                setRequestProperty("Content-Type", "application/json")
+-                setRequestProperty("Charset", "utf-8")
+-                setRequestProperty("Content-Length", requestBody.toByteArray().size.toString())
+-
+-                outputStream.use { os ->
+-                    val input = requestBody.toByteArray(Charsets.UTF_8)
+-                    os.write(input, 0, input.size)
+-                    os.flush()
+-                }
+-
+-                // Read and handle the response
+-                val response = if (responseCode == HttpURLConnection.HTTP_OK) {
+-                    inputStream.bufferedReader().use { it.readText() }  // Read response
+-                } else {
+-                    Log.e("HTTP_ERROR", "Response Code: $responseCode")
+-                    null
+-                }
++}
+ 
+-                // Check if response is not null and then execute action
+-                response?.let {
+-                    // Execute your action here
+-                    Log.d("Zivi", "Success! Response: $it")
+-                    db.exceptionDao().deleteAllExceptions()
+-                    // For example, you can parse the response and act based on its content
+-                }
+-            }
+-        } catch (e: IOException) {
+-            Log.e("Zivi", "IOException in sendPostRequest", e)
+-        } catch (e: Exception) {
+-            Log.e("Zivi", "Exception in sendPostRequest", e)
+-        }
+-    }
+-}
+Index: exceptionCatcher/src/main/java/com/zivkesten/test/data/ExceptionAdditionalInfo.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/exceptionCatcher/src/main/java/com/zivkesten/test/data/ExceptionAdditionalInfo.kt b/exceptionCatcher/src/main/java/com/zivkesten/test/data/ExceptionAdditionalInfo.kt
+new file mode 100644
+--- /dev/null	(date 1706607223521)
++++ b/exceptionCatcher/src/main/java/com/zivkesten/test/data/ExceptionAdditionalInfo.kt	(date 1706607223521)
+@@ -0,0 +1,14 @@
++package com.zivkesten.test.data
++
++data class ExceptionAdditionalInfo(
++    val deviceModel: String,
++    val osVersion: String,
++    val appVersion: String,
++    val networkType: String,
++    val locale: String,
++    val batteryLevel: Int,
++    val memoryUsage: Long,
++    val stackTrace: String,
++    val errorMessage: String,
++    val screenOrientation: String,
++)
+Index: exceptionCatcher/src/main/java/com/zivkesten/test/data/CaughtException.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/exceptionCatcher/src/main/java/com/zivkesten/test/data/CaughtException.kt b/exceptionCatcher/src/main/java/com/zivkesten/test/data/DomainException.kt
+rename from exceptionCatcher/src/main/java/com/zivkesten/test/data/CaughtException.kt
+rename to exceptionCatcher/src/main/java/com/zivkesten/test/data/DomainException.kt
+--- a/exceptionCatcher/src/main/java/com/zivkesten/test/data/CaughtException.kt	(revision 6f94d22a1aa47cc78daa1b5a7031257b46c6f3a7)
++++ b/exceptionCatcher/src/main/java/com/zivkesten/test/data/DomainException.kt	(date 1706607251712)
+@@ -1,8 +1,17 @@
+ package com.zivkesten.test.data
+ 
+-data class CaughtException(
+-    val exception: String,
+-    val timeStamp: Long,
++data class DomainException(
++    val timestamp: Long,
++    val message: String?,
++    val deviceModel: String,
++    val osVersion: String,
++    val appVersion: String,
++    val networkType: String,
++    val locale: String,
++    val batteryLevel: Int,
++    val memoryUsage: Long,
++    val stackTrace: String,
++    val screenOrientation: String,
+ )
+ 
+ 
+Index: exceptionCatcher/build.gradle.kts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>plugins {\n    id(\"com.android.library\")\n    id(\"org.jetbrains.kotlin.android\")\n    kotlin(\"kapt\")\n}\n\nandroid {\n    namespace = \"com.zivkesten.test\"\n    compileSdk = 34\n\n    defaultConfig {\n        minSdk = 24\n\n        testInstrumentationRunner = \"androidx.test.runner.AndroidJUnitRunner\"\n        consumerProguardFiles(\"consumer-rules.pro\")\n    }\n\n    buildTypes {\n        release {\n            isMinifyEnabled = false\n            proguardFiles(\n                getDefaultProguardFile(\"proguard-android-optimize.txt\"),\n                \"proguard-rules.pro\"\n            )\n        }\n    }\n    compileOptions {\n        sourceCompatibility = JavaVersion.VERSION_1_8\n        targetCompatibility = JavaVersion.VERSION_1_8\n    }\n    kotlinOptions {\n        jvmTarget = \"1.8\"\n    }\n}\n\ndependencies {\n\n    implementation(\"androidx.core:core-ktx:1.12.0\")\n    implementation(\"androidx.appcompat:appcompat:1.6.1\")\n    implementation(\"com.google.android.material:material:1.11.0\")\n    implementation(\"androidx.work:work-runtime-ktx:2.9.0\")\n\n    implementation (\"androidx.room:room-runtime:2.6.1\")\n    kapt (\"androidx.room:room-compiler:2.6.1\")\n    implementation (\"androidx.room:room-ktx:2.6.1\")\n\n    implementation (\"com.google.code.gson:gson:2.10.1\")\n\n\n\n    testImplementation(\"junit:junit:4.13.2\")\n    androidTestImplementation(\"androidx.test.ext:junit:1.1.5\")\n    androidTestImplementation(\"androidx.test.espresso:espresso-core:3.5.1\")\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/exceptionCatcher/build.gradle.kts b/exceptionCatcher/build.gradle.kts
+--- a/exceptionCatcher/build.gradle.kts	(revision 6f94d22a1aa47cc78daa1b5a7031257b46c6f3a7)
++++ b/exceptionCatcher/build.gradle.kts	(date 1706559841760)
+@@ -46,7 +46,8 @@
+ 
+     implementation ("com.google.code.gson:gson:2.10.1")
+ 
+-
++    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
++    implementation ("androidx.lifecycle:lifecycle-common-java8:2.7.0")
+ 
+     testImplementation("junit:junit:4.13.2")
+     androidTestImplementation("androidx.test.ext:junit:1.1.5")
+Index: exceptionCatcher/src/main/AndroidManifest.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\">\n\n    <uses-permission android:name=\"android.permission.INTERNET\" />\n\n    <application\n        android:networkSecurityConfig=\"@xml/network_security_config\"\n    >\n</application>\n\n    </manifest>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/exceptionCatcher/src/main/AndroidManifest.xml b/exceptionCatcher/src/main/AndroidManifest.xml
+--- a/exceptionCatcher/src/main/AndroidManifest.xml	(revision 6f94d22a1aa47cc78daa1b5a7031257b46c6f3a7)
++++ b/exceptionCatcher/src/main/AndroidManifest.xml	(date 1706605185235)
+@@ -2,6 +2,8 @@
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+ 
+     <uses-permission android:name="android.permission.INTERNET" />
++    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
++
+ 
+     <application
+         android:networkSecurityConfig="@xml/network_security_config"
+Index: exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionsHandler.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionsHandler.kt b/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionsHandler.kt
+new file mode 100644
+--- /dev/null	(date 1706609627673)
++++ b/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionsHandler.kt	(date 1706609627673)
+@@ -0,0 +1,150 @@
++package com.zivkesten.test
++import android.content.Context
++import android.util.Log
++import androidx.lifecycle.DefaultLifecycleObserver
++import androidx.room.Room
++import com.google.gson.Gson
++import com.zivkesten.test.data.ExceptionAdditionalInfo
++import com.zivkesten.test.data.ExceptionReport
++import com.zivkesten.test.data.mapper.ExceptionsMapper.toDomainException
++import kotlinx.coroutines.CoroutineScope
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.Job
++import kotlinx.coroutines.delay
++import kotlinx.coroutines.isActive
++import kotlinx.coroutines.launch
++import java.io.IOException
++import java.net.HttpURLConnection
++import java.net.URL
++
++private const val DATABASE_NAME = "exception-database"
++
++class ExceptionsHandler(
++    context: Context,
++    private val coroutineScope: CoroutineScope
++): DefaultLifecycleObserver {
++    private var job: Job? = null
++
++    private val db: AppDatabase = Room.databaseBuilder(
++        context.applicationContext,
++        AppDatabase::class.java, DATABASE_NAME
++    ).build()
++
++    private val infoFactory = ExceptionInfoFactory(context)
++
++    init {
++        val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
++
++        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
++            Log.e("Zivi", "exception $exception")
++            handleException(exception)
++            //defaultUncaughtExceptionHandler?.uncaughtException(thread, exception)
++
++        }
++    }
++
++    fun handleException(exception: Throwable) {
++        job = coroutineScope.launch(Dispatchers.IO) {
++            val additionalInfo = infoFactory.additionalInfo(exception)
++            storeException(exception, additionalInfo)
++        }
++    }
++
++    private suspend fun storeException(
++        exception: Throwable,
++        additionalInfo: ExceptionAdditionalInfo
++    ) = db.exceptionDao().insertException(
++        ExceptionEntity(
++            timestamp = System.currentTimeMillis(),
++            message = exception.message,
++            deviceModel = additionalInfo.deviceModel,
++            osVersion = additionalInfo.osVersion,
++            appVersion = additionalInfo.appVersion,
++            networkType = additionalInfo.networkType,
++            locale = additionalInfo.locale,
++            batteryLevel = additionalInfo.batteryLevel,
++            memoryUsage = additionalInfo.memoryUsage,
++            stackTrace = additionalInfo.stackTrace,
++            screenOrientation = additionalInfo.screenOrientation,
++        )
++    )
++
++    fun scheduleRegularReports() {
++        Log.d("Zivi", "scheduleRegularReports")
++        job = coroutineScope.launch(Dispatchers.IO) {
++            Log.d("Zivi", "getting domainExceptionsList")
++            while (isActive) {
++                val allExceptions = db.exceptionDao().getAllExceptions()
++
++                // If we have any exceptions stored we continue to send them to the server
++                if (allExceptions.isNotEmpty()) {
++
++                    // Map the entity to a domain model
++                    val domainExceptionsList = allExceptions.map {
++                        it.toDomainException()
++                    }
++
++                    // Try to send the exceptions
++                    try {
++                        sendPostRequest(
++                            ExceptionReport(
++                                exceptions = domainExceptionsList,
++                                time = System.currentTimeMillis()
++                            )
++                        )
++
++                        Log.i("Zivi", "Report sent successfully")
++                    } catch (e: Exception) {
++                        Log.e("Zivi", "Error sending report", e)
++                    }
++                }
++
++                delay(5000) // Delay for one minute
++            }
++        }
++    }
++
++    private suspend fun sendPostRequest(
++        report: ExceptionReport,
++        endpoint: URL? = null
++    ) {
++        try {
++            val requestBody = Gson().toJson(report)
++            val url = endpoint ?: URL("http://10.0.2.2:9000/api/exceptions")
++            (url.openConnection() as HttpURLConnection).apply {
++                requestMethod = "POST"
++                doOutput = true
++                setRequestProperty("Content-Type", "application/json")
++                setRequestProperty("Charset", "utf-8")
++                setRequestProperty("Content-Length", requestBody.toByteArray().size.toString())
++
++                outputStream.use { os ->
++                    val input = requestBody.toByteArray(Charsets.UTF_8)
++                    os.write(input, 0, input.size)
++                    os.flush()
++                }
++
++                // Read and handle the response
++                val response = if (responseCode == HttpURLConnection.HTTP_OK) {
++                    inputStream.bufferedReader().use { it.readText() }  // Read response
++                } else {
++                    Log.e("HTTP_ERROR", "Response Code: $responseCode")
++                    null
++                }
++
++                response?.let {
++                    // We have a response, we can clear the cache now.
++                    Log.d("Zivi", "Success! Response: $it")
++                    db.exceptionDao().deleteAllExceptions()
++
++                }
++            }
++        } catch (e: IOException) {
++            Log.e("Zivi", "IOException in sendPostRequest", e)
++        } catch (e: Exception) {
++            Log.e("Zivi", "Exception in sendPostRequest", e)
++        }
++    }
++
++    fun cancelReporting() = job?.cancel()
++}
+Index: exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionInfoFactory.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionInfoFactory.kt b/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionInfoFactory.kt
+new file mode 100644
+--- /dev/null	(date 1706607223519)
++++ b/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionInfoFactory.kt	(date 1706607223519)
+@@ -0,0 +1,89 @@
++package com.zivkesten.test
++
++import android.content.Context
++import android.content.Intent
++import android.content.IntentFilter
++import android.content.pm.PackageManager
++import android.content.res.Configuration
++import android.net.ConnectivityManager
++import android.os.BatteryManager
++import android.util.Log
++import com.zivkesten.test.data.ExceptionAdditionalInfo
++import java.util.Locale
++
++private const val LANDSCAPE = "Landscape"
++private const val PORTRAIT = "Portrait"
++private const val NO_MESSAGE_PROVIDED = "NO Message provided"
++private const val UNKNOWN = "Unknown"
++
++class ExceptionInfoFactory(private val context: Context) {
++
++    fun additionalInfo(exception: Throwable): ExceptionAdditionalInfo {
++        val deviceModel = android.os.Build.MODEL
++        val osVersion = android.os.Build.VERSION.RELEASE
++        val appVersion = getAppVersion(context)
++        val networkType = getNetworkType(context)
++        val locale = Locale.getDefault().toString()
++        val batteryLevel = getBatteryLevel(context)
++        val memoryUsage = getMemoryUsage()
++        val stackTrace = Log.getStackTraceString(exception)
++        val errorMessage = exception.message ?: NO_MESSAGE_PROVIDED
++        val screenOrientation = getScreenOrientation(context)
++
++        return ExceptionAdditionalInfo(
++            deviceModel,
++            osVersion,
++            appVersion,
++            networkType,
++            locale,
++            batteryLevel,
++            memoryUsage,
++            stackTrace,
++            errorMessage,
++            screenOrientation,
++        )
++    }
++
++    private fun getAppVersion(context: Context): String {
++        return try {
++            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
++            packageInfo.versionName
++        } catch (e: PackageManager.NameNotFoundException) {
++            UNKNOWN
++        }
++    }
++
++    private fun getNetworkType(context: Context): String {
++        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
++        val activeNetwork = connectivityManager.activeNetworkInfo
++        return when (activeNetwork?.type) {
++            ConnectivityManager.TYPE_WIFI -> "WiFi"
++            ConnectivityManager.TYPE_MOBILE -> "Mobile"
++            else -> "None"
++        }
++    }
++
++    private fun getBatteryLevel(context: Context): Int {
++        val batteryStatus: Intent? = IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { ifilter ->
++            context.registerReceiver(null, ifilter)
++        }
++        val level: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
++        val scale: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
++
++        return if (level >= 0 && scale > 0) {
++            (level / scale.toFloat() * 100).toInt()
++        } else {
++            -1 // Battery level not available
++        }
++    }
++
++    private fun getMemoryUsage(): Long {
++        val runtime = Runtime.getRuntime()
++        return runtime.totalMemory() - runtime.freeMemory() // Returns memory usage in bytes
++    }
++
++    private fun getScreenOrientation(context: Context): String {
++        val orientation = context.resources.configuration.orientation
++        return if (orientation == Configuration.ORIENTATION_LANDSCAPE) LANDSCAPE else PORTRAIT
++    }
++}
+Index: exceptionCatcher/src/main/java/com/zivkesten/test/data/ExceptionReport.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.zivkesten.test.data\n\ndata class ExceptionReport(\n    val exceptions: List<CaughtException>,\n    val time: Long\n)
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/exceptionCatcher/src/main/java/com/zivkesten/test/data/ExceptionReport.kt b/exceptionCatcher/src/main/java/com/zivkesten/test/data/ExceptionReport.kt
+--- a/exceptionCatcher/src/main/java/com/zivkesten/test/data/ExceptionReport.kt	(revision 6f94d22a1aa47cc78daa1b5a7031257b46c6f3a7)
++++ b/exceptionCatcher/src/main/java/com/zivkesten/test/data/ExceptionReport.kt	(date 1706607055246)
+@@ -1,6 +1,6 @@
+ package com.zivkesten.test.data
+ 
+ data class ExceptionReport(
+-    val exceptions: List<CaughtException>,
++    val exceptions: List<DomainException>,
+     val time: Long
+ )
+\ No newline at end of file
+Index: exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionEntity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.zivkesten.test\n\nimport androidx.room.Entity\nimport androidx.room.PrimaryKey\n\n@Entity\ndata class ExceptionEntity(\n    @PrimaryKey(autoGenerate = true) val id: Int = 0,\n    val timestamp: Long,\n    val exception: String\n)
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionEntity.kt b/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionEntity.kt
+--- a/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionEntity.kt	(revision 6f94d22a1aa47cc78daa1b5a7031257b46c6f3a7)
++++ b/exceptionCatcher/src/main/java/com/zivkesten/test/ExceptionEntity.kt	(date 1706607235773)
+@@ -7,5 +7,14 @@
+ data class ExceptionEntity(
+     @PrimaryKey(autoGenerate = true) val id: Int = 0,
+     val timestamp: Long,
+-    val exception: String
++    val message: String?,
++    val deviceModel: String,
++    val osVersion: String,
++    val appVersion: String,
++    val networkType: String,
++    val locale: String,
++    val batteryLevel: Int,
++    val memoryUsage: Long,
++    val stackTrace: String,
++    val screenOrientation: String,
+ )
+\ No newline at end of file
+Index: app/src/main/AndroidManifest.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    xmlns:tools=\"http://schemas.android.com/tools\">\n\n    <application\n        android:name=\".SimilarWebApplication\"\n        android:allowBackup=\"true\"\n        android:dataExtractionRules=\"@xml/data_extraction_rules\"\n        android:fullBackupContent=\"@xml/backup_rules\"\n        android:icon=\"@mipmap/ic_launcher\"\n        android:label=\"@string/app_name\"\n        android:roundIcon=\"@mipmap/ic_launcher_round\"\n        android:supportsRtl=\"true\"\n        android:theme=\"@style/Theme.SimilarWebTest\"\n        tools:targetApi=\"31\">\n        <activity\n            android:name=\".MainActivity\"\n            android:exported=\"true\"\n            android:theme=\"@style/Theme.SimilarWebTest\">\n            <intent-filter>\n                <action android:name=\"android.intent.action.MAIN\" />\n\n                <category android:name=\"android.intent.category.LAUNCHER\" />\n            </intent-filter>\n        </activity>\n    </application>\n\n</manifest>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+--- a/app/src/main/AndroidManifest.xml	(revision 6f94d22a1aa47cc78daa1b5a7031257b46c6f3a7)
++++ b/app/src/main/AndroidManifest.xml	(date 1706603191294)
+@@ -16,6 +16,7 @@
+         <activity
+             android:name=".MainActivity"
+             android:exported="true"
++            android:label="@string/app_name"
+             android:theme="@style/Theme.SimilarWebTest">
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+Index: app/src/main/java/com/zivkesten/similarwebtest/SimilarWebApplication.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.zivkesten.similarwebtest\n\nimport android.app.Application\nimport android.util.Log\nimport com.zivkesten.test.ExceptionCatcher\nimport kotlinx.coroutines.CoroutineScope\nimport kotlinx.coroutines.SupervisorJob\n\nclass SimilarWebApplication : Application() {\n    val applicationScope = CoroutineScope(SupervisorJob())\n    lateinit var exceptionCatcher: ExceptionCatcher\n\n    override fun onCreate() {\n        super.onCreate()\n        exceptionCatcher = ExceptionCatcher(this, applicationScope).also {\n            Log.d(\"Zivi\", \"onCreate\")\n            it.scheduleRegularReports()\n        }\n    }\n\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/zivkesten/similarwebtest/SimilarWebApplication.kt b/app/src/main/java/com/zivkesten/similarwebtest/SimilarWebApplication.kt
+--- a/app/src/main/java/com/zivkesten/similarwebtest/SimilarWebApplication.kt	(revision 6f94d22a1aa47cc78daa1b5a7031257b46c6f3a7)
++++ b/app/src/main/java/com/zivkesten/similarwebtest/SimilarWebApplication.kt	(date 1706610005675)
+@@ -1,21 +1,12 @@
+ package com.zivkesten.similarwebtest
+ 
+ import android.app.Application
+-import android.util.Log
+ import com.zivkesten.test.ExceptionCatcher
+-import kotlinx.coroutines.CoroutineScope
+-import kotlinx.coroutines.SupervisorJob
+ 
+ class SimilarWebApplication : Application() {
+-    val applicationScope = CoroutineScope(SupervisorJob())
+-    lateinit var exceptionCatcher: ExceptionCatcher
+ 
+     override fun onCreate() {
+         super.onCreate()
+-        exceptionCatcher = ExceptionCatcher(this, applicationScope).also {
+-            Log.d("Zivi", "onCreate")
+-            it.scheduleRegularReports()
+-        }
++        ExceptionCatcher.initialize(this)
+     }
+-
+ }
+\ No newline at end of file
+Index: exceptionCatcher/src/main/java/com/zivkesten/test/data/mapper/ExceptionsMapper.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/exceptionCatcher/src/main/java/com/zivkesten/test/data/mapper/ExceptionsMapper.kt b/exceptionCatcher/src/main/java/com/zivkesten/test/data/mapper/ExceptionsMapper.kt
+new file mode 100644
+--- /dev/null	(date 1706607251710)
++++ b/exceptionCatcher/src/main/java/com/zivkesten/test/data/mapper/ExceptionsMapper.kt	(date 1706607251710)
+@@ -0,0 +1,20 @@
++package com.zivkesten.test.data.mapper
++
++import com.zivkesten.test.ExceptionEntity
++import com.zivkesten.test.data.DomainException
++
++object ExceptionsMapper {
++    fun ExceptionEntity.toDomainException() = DomainException(
++        timestamp = this.timestamp,
++        message = this.message,
++        deviceModel = this.deviceModel,
++        osVersion = this.osVersion,
++        appVersion = this.appVersion,
++        networkType = this.networkType,
++        locale = this.locale,
++        batteryLevel = this.batteryLevel,
++        memoryUsage = this.memoryUsage,
++        stackTrace = this.stackTrace,
++        screenOrientation = this.screenOrientation,
++    )
++}
+\ No newline at end of file
+Index: app/src/main/java/com/zivkesten/similarwebtest/MainActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.zivkesten.similarwebtest\n\nimport android.os.Bundle\nimport androidx.activity.ComponentActivity\nimport androidx.activity.compose.setContent\nimport androidx.compose.foundation.layout.Box\nimport androidx.compose.foundation.layout.Column\nimport androidx.compose.foundation.layout.fillMaxSize\nimport androidx.compose.material3.Button\nimport androidx.compose.material3.Text\nimport androidx.compose.ui.Modifier\n\nclass MainActivity : ComponentActivity() {\n\n    override fun onCreate(savedInstanceState: Bundle?) {\n        super.onCreate(savedInstanceState)\n        val exceptionCatcher = (application as SimilarWebApplication).exceptionCatcher\n\n\n\n        setContent {\n            Box(Modifier.fillMaxSize()) {\n                Column(Modifier.fillMaxSize()) {\n                    Button(onClick = {\n                        throw RuntimeException(\"Test Uncaught Exception\")\n                    }) {\n                        Text(\"Test Uncaught Exception\")\n                    }\n                    Button(onClick = {\n                        try {\n                            throw Exception(\"Test Caught Exception\")\n                        } catch (e: Exception) {\n                            exceptionCatcher.handleException(e)\n                        }\n                    }) {\n                        Text(\"Test caught Exception\")\n                    }\n                }\n            }\n        }\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/zivkesten/similarwebtest/MainActivity.kt b/app/src/main/java/com/zivkesten/similarwebtest/MainActivity.kt
+--- a/app/src/main/java/com/zivkesten/similarwebtest/MainActivity.kt	(revision 6f94d22a1aa47cc78daa1b5a7031257b46c6f3a7)
++++ b/app/src/main/java/com/zivkesten/similarwebtest/MainActivity.kt	(date 1706608879937)
+@@ -1,27 +1,28 @@
+ package com.zivkesten.similarwebtest
+ 
+ import android.os.Bundle
++import android.util.Log
+ import androidx.activity.ComponentActivity
+ import androidx.activity.compose.setContent
++import androidx.compose.foundation.background
+ import androidx.compose.foundation.layout.Box
+ import androidx.compose.foundation.layout.Column
+ import androidx.compose.foundation.layout.fillMaxSize
+ import androidx.compose.material3.Button
+ import androidx.compose.material3.Text
+ import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.Color
++import com.zivkesten.test.ExceptionCatcher
+ 
+ class MainActivity : ComponentActivity() {
+-
+     override fun onCreate(savedInstanceState: Bundle?) {
+         super.onCreate(savedInstanceState)
+-        val exceptionCatcher = (application as SimilarWebApplication).exceptionCatcher
+-
+-
+-
++        Log.d("Zivi", "MainActivity onCreate")
+         setContent {
+-            Box(Modifier.fillMaxSize()) {
++            Box(Modifier.fillMaxSize().background(Color.Red)) {
+                 Column(Modifier.fillMaxSize()) {
+                     Button(onClick = {
++                        Log.d("Zivi", "Click")
+                         throw RuntimeException("Test Uncaught Exception")
+                     }) {
+                         Text("Test Uncaught Exception")
+@@ -30,7 +31,8 @@
+                         try {
+                             throw Exception("Test Caught Exception")
+                         } catch (e: Exception) {
+-                            exceptionCatcher.handleException(e)
++                            //ExceptionCatcher.exceptionsHandler.handleException(e)
++                            e.printStackTrace()
+                         }
+                     }) {
+                         Text("Test caught Exception")

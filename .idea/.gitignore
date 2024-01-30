@@ -63,7 +63,6 @@ proguard/
 *.bak
 *.swp
 *~.nib
-local.properties
 *.properties
 *.dat
 *.tmproj

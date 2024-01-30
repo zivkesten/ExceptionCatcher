@@ -9,7 +9,6 @@ import android.net.ConnectivityManager
 import android.os.BatteryManager
 import android.util.Log
 import com.zivkesten.test.data.ExceptionAdditionalInfo
-import java.lang.Exception
 import java.util.Locale
 
 private const val LANDSCAPE = "Landscape"
