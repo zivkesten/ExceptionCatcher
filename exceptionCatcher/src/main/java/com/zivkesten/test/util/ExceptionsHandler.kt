@@ -1,14 +1,17 @@
-package com.zivkesten.test
+package com.zivkesten.test.util
+
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.room.Room
 import com.google.gson.Gson
-import com.zivkesten.test.ExceptionCatcher.isEmulator
-import com.zivkesten.test.ExceptionInfoFactory.additionalInfo
-import com.zivkesten.test.data.ExceptionAdditionalInfo
-import com.zivkesten.test.data.ExceptionReport
+import com.zivkesten.test.data.local.AppDatabase
+import com.zivkesten.test.data.local.entities.ExceptionEntity
 import com.zivkesten.test.data.mapper.ExceptionsMapper.toDomainException
+import com.zivkesten.test.data.network.ExceptionReport
+import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
+import com.zivkesten.test.util.ExceptionCatcher.isEmulator
+import com.zivkesten.test.util.ExceptionInfoFactory.additionalInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

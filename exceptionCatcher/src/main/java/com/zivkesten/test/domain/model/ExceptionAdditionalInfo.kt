@@ -1,4 +1,4 @@
-package com.zivkesten.test.data
+package com.zivkesten.test.domain.model
 
 data class ExceptionAdditionalInfo(
     val deviceModel: String,

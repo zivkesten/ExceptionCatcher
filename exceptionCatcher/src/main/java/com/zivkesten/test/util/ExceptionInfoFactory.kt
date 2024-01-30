@@ -1,4 +1,4 @@
-package com.zivkesten.test
+package com.zivkesten.test.util
 
 import android.content.Context
 import android.content.Intent
@@ -8,14 +8,13 @@ import android.content.res.Configuration
 import android.net.ConnectivityManager
 import android.os.BatteryManager
 import android.util.Log
-import com.zivkesten.test.data.ExceptionAdditionalInfo
+import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
 import java.util.Locale
 
 private const val LANDSCAPE = "Landscape"
 private const val PORTRAIT = "Portrait"
 private const val NO_MESSAGE_PROVIDED = "NO Message provided"
 private const val UNKNOWN = "Unknown"
-
 object ExceptionInfoFactory {
 
     fun Throwable.additionalInfo(context: Context): ExceptionAdditionalInfo {

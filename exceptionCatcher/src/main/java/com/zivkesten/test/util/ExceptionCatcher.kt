@@ -1,4 +1,4 @@
-package com.zivkesten.test
+package com.zivkesten.test.util
 
 import android.app.Activity
 import android.app.Application
@@ -29,7 +29,8 @@ object ExceptionCatcher {
     lateinit var exceptionsHandler: ExceptionsHandler
     var ipAddress: String? = null
     fun initialize(application: Application) {
-        exceptionsHandler = ExceptionsHandler(application, CoroutineScope(SupervisorJob() + Dispatchers.IO))
+        exceptionsHandler =
+            ExceptionsHandler(application, CoroutineScope(SupervisorJob() + Dispatchers.IO))
 
         application.registerActivityLifecycleCallbacks(
             object : Application.ActivityLifecycleCallbacks {
@@ -71,4 +72,3 @@ object ExceptionCatcher {
         this.ipAddress = ipAddress
     }
 }
-

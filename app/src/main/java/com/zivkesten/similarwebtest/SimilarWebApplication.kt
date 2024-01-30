@@ -1,7 +1,7 @@
 package com.zivkesten.similarwebtest
 
 import android.app.Application
-import com.zivkesten.test.ExceptionCatcher
+import com.zivkesten.test.util.ExceptionCatcher
 
 class SimilarWebApplication : Application() {
 

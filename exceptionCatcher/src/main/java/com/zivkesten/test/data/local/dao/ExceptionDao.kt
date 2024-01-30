@@ -1,8 +1,9 @@
-package com.zivkesten.test
+package com.zivkesten.test.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import com.zivkesten.test.data.local.entities.ExceptionEntity
 
 @Dao
 interface ExceptionDao {

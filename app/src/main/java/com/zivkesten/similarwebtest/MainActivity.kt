@@ -24,14 +24,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.zivkesten.test.ExceptionCatcher
+import com.zivkesten.similarwebtest.ui.theme.SimilarWebTestTheme
+import com.zivkesten.test.util.ExceptionCatcher
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("Zivi", "MainActivity onCreate")
         setContent {
-            MainScreen()
+            SimilarWebTestTheme {
+                MainScreen()
+            }
         }
     }
 
