@@ -4,9 +4,20 @@ import android.app.Activity
 import android.app.Application
 import android.os.Build
 import android.os.Bundle
+import androidx.room.Room
+import com.zivkesten.test.data.local.AppDatabase
+import com.zivkesten.test.data.local.ExceptionStoreImpl
+import com.zivkesten.test.data.network.ConnectionFactory
+import com.zivkesten.test.data.network.ExceptionRepositoryImpl
+import com.zivkesten.test.util.ExceptionInfoFactory.additionalInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import java.net.HttpURLConnection
+import java.net.URL
+
+private const val DATABASE_NAME = "exception-database"
+
 
 /**
  * ExceptionCatcherInitializer is a utility object designed to initialize the ExceptionCatcher
@@ -26,12 +37,39 @@ import kotlinx.coroutines.SupervisorJob
  * might be required.
  */
 object ExceptionCatcher {
-    lateinit var exceptionsHandler: ExceptionsHandler
+    private var exceptionsHandler: ExceptionsHandler? = null
     var ipAddress: String? = null
+    private lateinit var application: Application
     fun initialize(application: Application) {
-        exceptionsHandler =
-            ExceptionsHandler(application, CoroutineScope(SupervisorJob() + Dispatchers.IO))
+        this.application = application
 
+        val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
+            handleException(exception)
+            defaultUncaughtExceptionHandler?.uncaughtException(thread, exception)
+        }
+
+        val exceptionStore = ExceptionStoreImpl(
+            Room.databaseBuilder(
+                application.applicationContext,
+                AppDatabase::class.java, DATABASE_NAME
+            ).build()
+        )
+
+        val exceptionRepository = ExceptionRepositoryImpl(
+            object : ConnectionFactory{
+                override fun createConnection(url: String) = (URL(url).openConnection() as HttpURLConnection)
+            })
+
+        exceptionsHandler = ExceptionsHandler(
+            CoroutineScope(SupervisorJob() + Dispatchers.IO),
+            exceptionStore,
+            exceptionRepository
+        )
+
+        // We register for life cycle events to determine when to start and stop the scheduled reporting
+        // This could present issues in edge cases like multi-window or activities in other processes
+        // but for now this is good enough
         application.registerActivityLifecycleCallbacks(
             object : Application.ActivityLifecycleCallbacks {
                 private var activeActivities = 0
@@ -43,7 +81,7 @@ object ExceptionCatcher {
                 override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                     if (activeActivities++ == 0) {
                         // App enters the foreground
-                        exceptionsHandler.scheduleRegularReports()
+                        exceptionsHandler?.scheduleRegularReports()
                     }
                 }
 
@@ -52,11 +90,20 @@ object ExceptionCatcher {
                         if (--activeActivities == 0) {
                             // No more activities in the stack,
                             // this means the task is done and we can stop sending exceptions to the server
-                            exceptionsHandler.cancelReporting()
+                            exceptionsHandler?.cancelReporting()
                         }
                     }
                 }
             }
+        )
+    }
+
+    fun isInitialized() = exceptionsHandler != null
+
+    fun handleException(exception: Throwable) {
+        exceptionsHandler?.handleException(
+            exception,
+            exception.additionalInfo(application.applicationContext)
         )
     }
 

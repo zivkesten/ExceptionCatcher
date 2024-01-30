@@ -1,8 +1,6 @@
 package com.zivkesten.similarwebtest
 
-import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -47,19 +45,18 @@ class MainActivity : ComponentActivity() {
                 IpAddressInput(ipAddress)
                 Spacer(modifier = Modifier.height(30.dp))
                 ThrowUnCaughtException()
-                ThrowCaughtException(context)
+                ThrowCaughtException()
             }
         }
     }
 
     @Composable
-    private fun ThrowCaughtException(context: Context) {
+    private fun ThrowCaughtException() {
         Button(onClick = {
             try {
                 throw Exception("Test Caught Exception")
             } catch (e: Exception) {
-                ExceptionCatcher.exceptionsHandler.handleException(e, context)
-                Log.d("Zivi", "handleException")
+                ExceptionCatcher.handleException(e)
                 e.printStackTrace()
             }
         }) {
@@ -70,7 +67,6 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun ThrowUnCaughtException() {
         Button(onClick = {
-            Log.d("Zivi", "Click")
             throw RuntimeException("Test Uncaught Exception")
         }) {
             Text("Test Uncaught Exception")

@@ -41,6 +41,8 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     implementation ("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.test.ext:junit-ktx:1.1.5")
+    testImplementation("junit:junit:4.12")
     kapt ("androidx.room:room-compiler:2.6.1")
     implementation ("androidx.room:room-ktx:2.6.1")
 
@@ -49,7 +51,27 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation ("androidx.lifecycle:lifecycle-common-java8:2.7.0")
 
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+
+    // For Robolectric
+    testImplementation ("org.robolectric:robolectric:4.10.3")
+
+    // For Mockito
+    testImplementation ("org.mockito:mockito-core:3.1.0")
+    testImplementation ("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
+    // Add MockK dependencies
+    testImplementation ("io.mockk:mockk:1.13.1")
+    testImplementation ("io.mockk:mockk-android:1.13.1")
+
+
+
+    // AndroidX Test - for Android instrumentation tests
+    testImplementation ("junit:junit:4.13.2")
+
+    androidTestImplementation ("androidx.test:core:1.5.0")
+    androidTestImplementation ("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation ("androidx.test:rules:1.5.0")
+    testImplementation ("androidx.arch.core:core-testing:2.2.0")
+
 }
