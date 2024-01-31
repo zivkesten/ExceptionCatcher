@@ -1,8 +1,6 @@
 
 # 🚀 ExceptionCatcher Integration Guide 🌟
 
-Welcome to the _ExceptionCatcher Library_ integration guide! This handy tool is designed to help you effortlessly track and manage exceptions in your applications. Let's dive into how you can get it up and running!
-
 ## 🌐 How to Run the Server:
 
 1. **Install Node.js** 🌳
