@@ -17,6 +17,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 private const val DATABASE_NAME = "exception-database"
+private const val INTERVAL: Long = 1000 * 60
+
 
 
 /**
@@ -81,7 +83,10 @@ object ExceptionCatcher {
                 override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                     if (activeActivities++ == 0) {
                         // App enters the foreground
-                        exceptionsHandler?.scheduleRegularReports()
+                        exceptionsHandler?.scheduleRegularReports(
+                            application.applicationContext,
+                            INTERVAL
+                        )
                     }
                 }
 

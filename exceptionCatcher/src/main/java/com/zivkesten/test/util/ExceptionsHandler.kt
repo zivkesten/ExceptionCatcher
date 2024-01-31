@@ -1,19 +1,19 @@
 package com.zivkesten.test.util
 
+import android.content.Context
 import com.zivkesten.test.data.local.ExceptionStore
 import com.zivkesten.test.data.local.ExceptionsHelper
 import com.zivkesten.test.data.mapper.ExceptionsMapper.toDomainException
-import com.zivkesten.test.data.network.model.ExceptionReport
 import com.zivkesten.test.data.network.ExceptionRepository
+import com.zivkesten.test.data.network.model.ExceptionReport
 import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
+import com.zivkesten.test.util.ExceptionInfoFactory.additionalInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-
-private const val INTERVAL: Long = 5000//1000 * 60
 
 class ExceptionsHandler(
     private val coroutineScope: CoroutineScope,
@@ -25,7 +25,7 @@ class ExceptionsHandler(
     private var job: Job? = null
 
     fun handleException(exception: Throwable, additionalInfo: ExceptionAdditionalInfo) {
-        job = coroutineScope.launch(Dispatchers.IO) {
+        coroutineScope.launch(Dispatchers.IO) {
             storeException(exception, additionalInfo)
         }
     }
@@ -39,8 +39,7 @@ class ExceptionsHandler(
         )
     }
 
-
-    fun scheduleRegularReports() {
+    fun scheduleRegularReports(context: Context, interval: Long = 1000 * 60) {
         job = coroutineScope.launch {
             while (isActive) {
                 val exceptionsCache = exceptionStore.getAllExceptions()
@@ -53,22 +52,26 @@ class ExceptionsHandler(
                     }
 
                     try {
+                        val report =
+                            ExceptionReport.create(exceptions = domainExceptionsList)
                         exceptionRepository.sendExceptionReport(
-                            ExceptionReport(
-                                exceptions = domainExceptionsList,
-                                time = System.currentTimeMillis()
-                            ),
-                            remoteIpForServer = ExceptionCatcher.ipAddress
-                        ) {
-                            println("$TAG, Report sent successfully")
-                            handleSuccess()
-                        }
+                            report,
+                            remoteIpForServer = ExceptionCatcher.ipAddress,
+                            onSuccess = {
+                                println("$TAG, Report sent successfully")
+                                handleSuccess()
+                            }, onFail = {
+                                println("$TAG, Error sending report ${it.message}")
+                                handleError(it, context)
+                            }
+                        )
                     } catch (e: Exception) {
-                        println("$TAG, Error sending report $e")
+                        println("$TAG, Error sending report ${e.message}")
+                        println("ExceptionCatcher Error during IO3 operation: ${e.message}")
+                        storeException(e, e.additionalInfo(context))
                     }
                 }
-
-                delay(INTERVAL)
+                delay(interval)
             }
         }
     }
@@ -79,5 +82,14 @@ class ExceptionsHandler(
         }
     }
 
-    fun cancelReporting() = job?.cancel()
+    private fun handleError(exception: Throwable, context: Context) {
+        coroutineScope.launch {
+            storeException(exception, exception.additionalInfo(context))
+        }
+    }
+
+    fun cancelReporting() {
+        job?.cancel()
+        job = null
+    }
 }

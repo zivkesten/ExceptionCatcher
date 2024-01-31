@@ -37,10 +37,10 @@ class ExceptionRepositoryImplTest {
         var success = false
 
         repository.sendExceptionReport(
-            ExceptionReport(listOf(), 0), "http://localhost"
-        ) {
-            success = true
-        }
+            ExceptionReport(listOf(), 0), "http://localhost",
+            onSuccess = { success = true },
+            onFail = { success = false }
+        )
 
         // Assert
         assertTrue(success)
@@ -58,10 +58,10 @@ class ExceptionRepositoryImplTest {
         var success = false
 
         repository.sendExceptionReport(
-            ExceptionReport(listOf(), 0), "http://localhost"
-        ) {
-            success = true
-        }
+            ExceptionReport(listOf(), 0), "http://localhost",
+            onSuccess = { success = true },
+            onFail = { success = false }
+        )
 
         assertFalse(success)
     }
@@ -77,10 +77,10 @@ class ExceptionRepositoryImplTest {
         var success = false
 
         repository.sendExceptionReport(
-            ExceptionReport(listOf(), 0), "http://localhost"
-        ) {
-            success = true
-        }
+            ExceptionReport(listOf(), 0), "http://localhost",
+            onSuccess = { success = true },
+            onFail = { success = false }
+        )
 
         assertFalse(success)
     }

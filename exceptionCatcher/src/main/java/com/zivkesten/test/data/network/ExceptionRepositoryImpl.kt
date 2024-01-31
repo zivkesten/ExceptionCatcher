@@ -18,6 +18,7 @@ class ExceptionRepositoryImpl(
         exceptionReport: ExceptionReport,
         remoteIpForServer: String?,
         onSuccess: () -> Unit,
+        onFail: (java.lang.Exception) -> Unit
     ): Unit = withContext(Dispatchers.IO) {
         try {
             val requestBody = Gson().toJson(exceptionReport)
@@ -43,6 +44,7 @@ class ExceptionRepositoryImpl(
                     inputStream.bufferedReader().use { it.readText() }  // Read response
                 } else {
                     println("$TAG, HTTP_ERROR, Response Code: $responseCode")
+                    onFail(Exception("HTTP_ERROR, Response Code: $responseCode"))
                     null
                 }
 
@@ -54,8 +56,10 @@ class ExceptionRepositoryImpl(
             }
         } catch (e: IOException) {
             println("$TAG, IOException during sending report -> $e")
+            onFail(e)
         } catch (e: Exception) {
             println("$TAG, Error sending report -> $e")
+            onFail(e)
         }
     }
 
