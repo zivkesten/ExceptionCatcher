@@ -7,7 +7,7 @@ import com.zivkesten.test.data.mapper.ExceptionsMapper.toDomainException
 import com.zivkesten.test.data.network.ExceptionRepository
 import com.zivkesten.test.data.network.model.ExceptionReport
 import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
-import com.zivkesten.test.util.ExceptionInfoFactory.additionalInfo
+import com.zivkesten.test.util.AdditionalInfoFactory.additionalInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,11 +33,7 @@ class ExceptionsHandler(
     private suspend fun storeException(
         exception: Throwable,
         additionalInfo: ExceptionAdditionalInfo
-    ): Long {
-        return exceptionStore.storeException(
-            ExceptionsHelper.create(exception, additionalInfo)
-        )
-    }
+    ): Long = exceptionStore.storeException(ExceptionsHelper.create(exception, additionalInfo))
 
     fun scheduleRegularReports(context: Context, interval: Long = 1000 * 60) {
         job = coroutineScope.launch {
@@ -52,8 +48,7 @@ class ExceptionsHandler(
                     }
 
                     try {
-                        val report =
-                            ExceptionReport.create(exceptions = domainExceptionsList)
+                        val report = ExceptionReport.create(exceptions = domainExceptionsList)
                         exceptionRepository.sendExceptionReport(
                             report,
                             remoteIpForServer = ExceptionCatcher.ipAddress,
@@ -67,7 +62,6 @@ class ExceptionsHandler(
                         )
                     } catch (e: Exception) {
                         println("$TAG, Error sending report ${e.message}")
-                        println("ExceptionCatcher Error during IO3 operation: ${e.message}")
                         storeException(e, e.additionalInfo(context))
                     }
                 }

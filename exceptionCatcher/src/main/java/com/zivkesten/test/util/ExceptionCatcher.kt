@@ -11,7 +11,7 @@ import com.zivkesten.test.data.local.AppDatabase
 import com.zivkesten.test.data.local.ExceptionStoreImpl
 import com.zivkesten.test.data.network.ConnectionFactory
 import com.zivkesten.test.data.network.ExceptionRepositoryImpl
-import com.zivkesten.test.util.ExceptionInfoFactory.additionalInfo
+import com.zivkesten.test.util.AdditionalInfoFactory.additionalInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
