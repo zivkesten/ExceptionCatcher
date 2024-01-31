@@ -55,6 +55,8 @@ dependencies {
     // For Robolectric
     testImplementation ("org.robolectric:robolectric:4.10.3")
 
+    implementation ("androidx.preference:preference-ktx:1.2.1")
+
     // For Mockito
     testImplementation ("org.mockito:mockito-core:3.1.0")
     testImplementation ("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")

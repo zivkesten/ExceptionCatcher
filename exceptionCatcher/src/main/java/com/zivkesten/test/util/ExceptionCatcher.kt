@@ -2,8 +2,11 @@ package com.zivkesten.test.util
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
+import android.preference.PreferenceManager
 import androidx.room.Room
 import com.zivkesten.test.data.local.AppDatabase
 import com.zivkesten.test.data.local.ExceptionStoreImpl
@@ -40,11 +43,14 @@ private const val INTERVAL: Long = 1000 * 60
  */
 object ExceptionCatcher {
     private var exceptionsHandler: ExceptionsHandler? = null
+
     var ipAddress: String? = null
     private lateinit var application: Application
+    private lateinit var preferences: SharedPreferences
     fun initialize(application: Application) {
         this.application = application
-
+        preferences = application.applicationContext.getSharedPreferences("ip", Context.MODE_PRIVATE)
+        setExternalIpAddress(preferences.getString("ip", "") ?: "")
         val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
             handleException(exception)
@@ -121,6 +127,7 @@ object ExceptionCatcher {
     }
 
     fun setExternalIpAddress(ipAddress: String) {
-        this.ipAddress = ipAddress
+        this.ipAddress = if (isEmulator())  "" else ipAddress
+        preferences.edit().putString("ip", this.ipAddress).apply()
     }
 }
