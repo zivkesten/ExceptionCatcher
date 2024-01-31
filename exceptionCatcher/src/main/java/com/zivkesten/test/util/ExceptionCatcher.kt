@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
-import android.preference.PreferenceManager
 import androidx.room.Room
 import com.zivkesten.test.data.local.AppDatabase
 import com.zivkesten.test.data.local.ExceptionStoreImpl
@@ -21,8 +20,6 @@ import java.net.URL
 
 private const val DATABASE_NAME = "exception-database"
 private const val INTERVAL: Long = 1000 * 60
-
-
 
 /**
  * ExceptionCatcherInitializer is a utility object designed to initialize the ExceptionCatcher
