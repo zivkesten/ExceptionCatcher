@@ -12,9 +12,9 @@ import java.io.ByteArrayInputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
 
-class ExceptionRepositoryImplTest {
+class RemoteDataSourceImplTest {
 
-    private lateinit var repository: ExceptionRepositoryImpl
+    private lateinit var repository: RemoteDataSourceImpl
     private val mockHttpURLConnection: HttpURLConnection = mock()
     private val mockOutputStream: OutputStream = mock()
 
@@ -30,7 +30,7 @@ class ExceptionRepositoryImplTest {
         val connectionFactoryMock = object : ConnectionFactory {
             override fun createConnection(url: String) = mockHttpURLConnection
         }
-        repository = ExceptionRepositoryImpl(connectionFactoryMock, true)
+        repository = RemoteDataSourceImpl(connectionFactoryMock, true)
         val testResponse = "OK"
         whenever(mockHttpURLConnection.responseCode).thenReturn(HttpURLConnection.HTTP_OK)
         whenever(mockHttpURLConnection.inputStream).thenReturn(ByteArrayInputStream(testResponse.toByteArray()))
@@ -50,7 +50,7 @@ class ExceptionRepositoryImplTest {
     fun `sendExceptionReport should handle Exception`() = runTest {
         // Arrange
         val connectionFactoryMock: ConnectionFactory = mock()
-        repository = ExceptionRepositoryImpl(connectionFactoryMock, true)
+        repository = RemoteDataSourceImpl(connectionFactoryMock, true)
 
         whenever(connectionFactoryMock.createConnection("http://localhost")).thenThrow(RuntimeException("Test exception"))
 
@@ -70,7 +70,7 @@ class ExceptionRepositoryImplTest {
     fun `sendExceptionReport should handle non-successful response`() = runTest {
         // Arrange
         val connectionFactoryMock: ConnectionFactory = mock()
-        repository = ExceptionRepositoryImpl(connectionFactoryMock, true)
+        repository = RemoteDataSourceImpl(connectionFactoryMock, true)
         whenever(mockHttpURLConnection.responseCode).thenReturn(HttpURLConnection.HTTP_INTERNAL_ERROR)
 
         // Act

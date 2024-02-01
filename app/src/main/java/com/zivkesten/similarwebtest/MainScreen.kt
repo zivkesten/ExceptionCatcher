@@ -70,7 +70,7 @@ private fun IpAddressInput(
     ipAddress: String,
     onValueChange: (String) -> Unit
 ) {
-    if (!ExceptionCatcher.isEmulator()) {
+    if (!isEmulator()) {
         Text(
             text = "YOU ARE ON A PHYSICAL DEVICE, ENTER YOUR SERVER IP HERE (it is printed when you run node server.js)",
             modifier = Modifier.padding(20.dp),

@@ -4,14 +4,15 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
-import android.os.Build
 import android.os.Bundle
 import androidx.room.Room
+import com.zivkesten.test.data.ExceptionRepositoryImpl
 import com.zivkesten.test.data.local.AppDatabase
-import com.zivkesten.test.data.local.ExceptionStoreImpl
+import com.zivkesten.test.data.local.LocalDataSourceImpl
 import com.zivkesten.test.data.remote.ConnectionFactory
-import com.zivkesten.test.data.remote.ExceptionRepositoryImpl
+import com.zivkesten.test.data.remote.RemoteDataSourceImpl
 import com.zivkesten.test.util.AdditionalInfoFactory.additionalInfo
+import com.zivkesten.test.util.isEmulator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -45,35 +46,15 @@ object ExceptionCatcher {
     private lateinit var preferences: SharedPreferences
     fun initialize(application: Application) {
         this.application = application
+
         preferences = application.applicationContext.getSharedPreferences("ip",
             Context.MODE_PRIVATE
         )
-
         setExternalIpAddress(preferences.getString("ip", "") ?: "")
-        val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
-            handleException(exception)
-            defaultUncaughtExceptionHandler?.uncaughtException(thread, exception)
-        }
 
-        val exceptionStore = ExceptionStoreImpl(
-            Room.databaseBuilder(
-                application.applicationContext,
-                AppDatabase::class.java, DATABASE_NAME
-            ).build()
-        )
+        observeUnCaughtExceptions()
 
-        val exceptionRepository = ExceptionRepositoryImpl(
-            object : ConnectionFactory {
-                override fun createConnection(url: String) =
-                    (URL(url).openConnection() as HttpURLConnection)
-            })
-
-        exceptionsHandler = ExceptionsHandler(
-            CoroutineScope(SupervisorJob() + Dispatchers.IO),
-            exceptionStore,
-            exceptionRepository
-        )
+        initilizeExceptionsHandler(application)
 
         // We register for life cycle events to determine when to start and stop the scheduled reporting
         // This could present issues in edge cases like multi-window or activities in other processes
@@ -109,7 +90,37 @@ object ExceptionCatcher {
         )
     }
 
-    fun isInitialized() = exceptionsHandler != null
+    private fun observeUnCaughtExceptions() {
+        val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
+            handleException(exception)
+            defaultUncaughtExceptionHandler?.uncaughtException(thread, exception)
+        }
+    }
+
+    private fun initilizeExceptionsHandler(application: Application) {
+        val localDataSource = LocalDataSourceImpl(
+            Room.databaseBuilder(
+                application.applicationContext,
+                AppDatabase::class.java, DATABASE_NAME
+            ).build()
+        )
+
+        val remoteDataSource = RemoteDataSourceImpl(
+            object : ConnectionFactory {
+                override fun createConnection(url: String) =
+                    (URL(url).openConnection() as HttpURLConnection)
+            })
+
+        val exceptionRepository = ExceptionRepositoryImpl(
+            localDataSource,
+            remoteDataSource
+        )
+        exceptionsHandler = ExceptionsHandler(
+            CoroutineScope(SupervisorJob() + Dispatchers.IO),
+            exceptionRepository
+        )
+    }
 
     fun handleException(exception: Throwable) {
         exceptionsHandler?.handleException(
@@ -118,14 +129,13 @@ object ExceptionCatcher {
         )
     }
 
-    fun isEmulator(): Boolean {
-        return (Build.FINGERPRINT.startsWith("google/sdk_gphone")
-                || Build.FINGERPRINT.startsWith("unknown")
-                || Build.MODEL.contains("google_sdk")
-                || Build.MODEL.contains("Emulator")
-                || Build.MODEL.contains("Android SDK built for x86"))
-    }
+    fun isInitialized() = exceptionsHandler != null
 
+
+    /*
+        Utility method to allow using a physical device not on the same machine as the local host
+        Would not be included if library would be in production.
+     */
     fun setExternalIpAddress(ipAddress: String) {
         this.ipAddress = if (isEmulator())  "" else ipAddress
         preferences.edit().putString("ip", this.ipAddress).apply()

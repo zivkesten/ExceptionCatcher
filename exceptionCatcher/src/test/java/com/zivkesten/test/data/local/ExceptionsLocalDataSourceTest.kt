@@ -13,10 +13,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ExceptionStoreTest {
+class ExceptionsLocalDataSourceTest {
 
     private lateinit var db: AppDatabase
-    private lateinit var exceptionStore: ExceptionStoreImpl
+    private lateinit var exceptionStore: LocalDataSourceImpl
 
     @Before
     fun setUp() {
@@ -25,7 +25,7 @@ class ExceptionStoreTest {
             AppDatabase::class.java
         ).build()
 
-        exceptionStore = ExceptionStoreImpl(db)
+        exceptionStore = LocalDataSourceImpl(db)
     }
 
     @After

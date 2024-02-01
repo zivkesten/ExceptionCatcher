@@ -2,12 +2,10 @@ package com.zivkesten.test
 
 import android.content.Context
 import android.widget.Toast
-import com.zivkesten.test.data.local.ExceptionStore
+import com.zivkesten.test.data.ExceptionsRepository
 import com.zivkesten.test.data.local.ExceptionsHelper
-import com.zivkesten.test.data.local.entities.ExceptionEntity
-import com.zivkesten.test.data.mapper.ExceptionsMapper.toDomainException
-import com.zivkesten.test.data.remote.ExceptionRepository
 import com.zivkesten.test.data.remote.model.ExceptionReport
+import com.zivkesten.test.domain.model.DomainException
 import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
 import com.zivkesten.test.util.AdditionalInfoFactory.additionalInfo
 import kotlinx.coroutines.CoroutineScope
@@ -23,17 +21,16 @@ import kotlinx.coroutines.withContext
 
 internal class ExceptionsHandler(
     private val coroutineScope: CoroutineScope,
-    private val exceptionStore: ExceptionStore,
-    private val exceptionRepository: ExceptionRepository
+    private val exceptionRepository: ExceptionsRepository
 ) {
     private val TAG = ExceptionsHandler::class.java.simpleName
     private var job: Job? = null
-    private var storedExceptions: StateFlow<List<ExceptionEntity>> = MutableStateFlow(emptyList())
+    private var storedExceptions: StateFlow<List<DomainException>> = MutableStateFlow(emptyList())
 
     init {
         // We update the stored exceptions reactively, listening to changes in the data base,
         coroutineScope.launch(Dispatchers.IO) {
-            storedExceptions = exceptionStore.storedExceptions().stateIn(coroutineScope)
+            storedExceptions = exceptionRepository.storedExceptions().stateIn(coroutineScope)
         }
     }
 
@@ -46,7 +43,7 @@ internal class ExceptionsHandler(
     private suspend fun storeException(
         exception: Throwable,
         additionalInfo: ExceptionAdditionalInfo
-    ): Long = exceptionStore.storeException(ExceptionsHelper.create(exception, additionalInfo))
+    ): Long = exceptionRepository.storeException(ExceptionsHelper.create(exception, additionalInfo))
 
     fun scheduleRegularReports(context: Context, interval: Long = 1000 * 60) {
         job = coroutineScope.launch {
@@ -55,14 +52,8 @@ internal class ExceptionsHandler(
                 // We avoided touching the dataBase and committing an IO operation Every minute
                 // by keeping an updated list that observes the dataBase for changes
                 if (storedExceptions.value.isNotEmpty()) {
-
-                    // Map the entity to a domain model
-                    val domainExceptionsList = storedExceptions.value.map {
-                        it.toDomainException()
-                    }
-
                     try {
-                        val report = ExceptionReport.create(exceptions = domainExceptionsList)
+                        val report = ExceptionReport.create(storedExceptions.value)
                         exceptionRepository.sendExceptionReport(
                             report,
                             remoteIpForServer = ExceptionCatcher.ipAddress,
@@ -90,7 +81,7 @@ internal class ExceptionsHandler(
                 Toast.makeText(context, "Report sent successfully", Toast.LENGTH_LONG).show()
             }
             withContext(Dispatchers.IO) {
-                exceptionStore.deleteAllExceptions()
+                exceptionRepository.deleteAllExceptions()
             }
         }
     }

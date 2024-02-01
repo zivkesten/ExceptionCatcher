@@ -4,8 +4,10 @@ import com.nhaarman.mockitokotlin2.argThat
 import com.nhaarman.mockitokotlin2.mock
 import com.zivkesten.test.ExceptionsHandler
 import com.zivkesten.test.additionalInfoMock
-import com.zivkesten.test.data.local.ExceptionStore
-import com.zivkesten.test.data.remote.ExceptionRepository
+import com.zivkesten.test.data.ExceptionRepositoryImpl
+import com.zivkesten.test.data.ExceptionsRepository
+import com.zivkesten.test.data.local.ExceptionsLocalDataSource
+import com.zivkesten.test.data.remote.ExceptionRemoteDataSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -18,15 +20,16 @@ class ExceptionsHandlerTest {
 
     private val testScope = TestScope()
     private lateinit var handler: ExceptionsHandler
-    private lateinit var exceptionStore: ExceptionStore
-    private lateinit var exceptionRepository: ExceptionRepository
+    private lateinit var localDataSource: ExceptionsLocalDataSource
+    private lateinit var remoteDataSource: ExceptionRemoteDataSource
+    private lateinit var exceptionsRepository: ExceptionsRepository
 
     @Before
     fun setup() {
-
-        exceptionStore = mock()
-        exceptionRepository = mock()
-        handler = ExceptionsHandler(testScope, exceptionStore, exceptionRepository)
+        localDataSource = mock()
+        remoteDataSource = mock()
+        exceptionsRepository = ExceptionRepositoryImpl(localDataSource, remoteDataSource)
+        handler = ExceptionsHandler(testScope, exceptionsRepository)
     }
 
     @Test
@@ -39,7 +42,7 @@ class ExceptionsHandlerTest {
         handler.handleException(testException, additionalInfo)
 
         // Verify the method call on the mocked DAO with a custom argument matcher
-        verify(exceptionStore).storeException(argThat { entity ->
+        verify(localDataSource).storeException(argThat { entity ->
             // Check all fields except timestamp
             entity.message == testException.message &&
                     entity.deviceModel == additionalInfo.deviceModel &&

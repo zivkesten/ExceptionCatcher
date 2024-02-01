@@ -4,17 +4,17 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.zivkesten.test.data.remote.model.ExceptionReport
-import com.zivkesten.test.ExceptionCatcher
+import com.zivkesten.test.util.isEmulator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
 
-internal class ExceptionRepositoryImpl(
+internal class RemoteDataSourceImpl(
     private val connectionFactory: ConnectionFactory,
     private val isEmulator: Boolean? = null // this is for similar web testers
-): ExceptionRepository {
-    private val TAG = ExceptionRepository::class.java.simpleName
+): ExceptionRemoteDataSource {
+    private val TAG = RemoteDataSourceImpl::class.java.simpleName
 
     override suspend fun sendExceptionReport(
         exceptionReport: ExceptionReport,
@@ -25,7 +25,7 @@ internal class ExceptionRepositoryImpl(
         try {
             val requestBody = exceptionReport.createRequestBody()
 
-            val local = isEmulator ?: ExceptionCatcher.isEmulator()
+            val local = isEmulator ?: isEmulator()
             val ipAddress = if (local) LOCAL_HOST_IP else remoteIpForServer
             val url = "http://$ipAddress:$PORT/api/exceptions"
 

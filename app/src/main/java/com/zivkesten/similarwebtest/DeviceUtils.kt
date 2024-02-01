@@ -1,11 +1,6 @@
-package com.zivkesten.test.util
+package com.zivkesten.similarwebtest
 
 import android.os.Build
-
-fun getMemoryUsage(): Long {
-    val runtime = Runtime.getRuntime()
-    return runtime.totalMemory() - runtime.freeMemory() // Returns memory usage in bytes
-}
 
 fun isEmulator(): Boolean {
     return (Build.FINGERPRINT.startsWith("google/sdk_gphone")
@@ -14,4 +9,3 @@ fun isEmulator(): Boolean {
             || Build.MODEL.contains("Emulator")
             || Build.MODEL.contains("Android SDK built for x86"))
 }
-
