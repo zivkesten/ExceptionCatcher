@@ -5,7 +5,6 @@ import com.nhaarman.mockitokotlin2.mock
 import com.zivkesten.test.additionalInfoMock
 import com.zivkesten.test.data.local.ExceptionStore
 import com.zivkesten.test.data.network.ExceptionRepository
-import io.mockk.MockKAnnotations
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -23,7 +22,6 @@ class ExceptionsHandlerTest {
 
     @Before
     fun setup() {
-        MockKAnnotations.init(this)
 
         exceptionStore = mock()
         exceptionRepository = mock()

@@ -46,7 +46,8 @@ dependencies {
     kapt ("androidx.room:room-compiler:2.6.1")
     implementation ("androidx.room:room-ktx:2.6.1")
 
-    implementation ("com.google.code.gson:gson:2.10.1")
+    implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
+    kapt ("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
 
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation ("androidx.lifecycle:lifecycle-common-java8:2.7.0")
@@ -62,9 +63,6 @@ dependencies {
     testImplementation ("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
-    // Add MockK dependencies
-    testImplementation ("io.mockk:mockk:1.13.1")
-    testImplementation ("io.mockk:mockk-android:1.13.1")
 
 
 

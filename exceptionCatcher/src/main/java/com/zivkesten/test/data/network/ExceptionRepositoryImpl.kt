@@ -1,6 +1,8 @@
 package com.zivkesten.test.data.network
 
-import com.google.gson.Gson
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.zivkesten.test.data.network.model.ExceptionReport
 import com.zivkesten.test.util.ExceptionCatcher
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +23,8 @@ class ExceptionRepositoryImpl(
         onFail: (java.lang.Exception) -> Unit
     ): Unit = withContext(Dispatchers.IO) {
         try {
-            val requestBody = Gson().toJson(exceptionReport)
+            val requestBody = exceptionReport.createRequestBody()
+
             val local = isEmulator ?: ExceptionCatcher.isEmulator()
             val ipAddress = if (local) LOCAL_HOST_IP else remoteIpForServer
             val url = "http://$ipAddress:$PORT/api/exceptions"
@@ -61,6 +64,15 @@ class ExceptionRepositoryImpl(
             println("$TAG, Error sending report -> $e")
             onFail(e)
         }
+    }
+
+    private fun ExceptionReport.createRequestBody(): String {
+        val moshi: Moshi = Moshi
+            .Builder()
+            .add(KotlinJsonAdapterFactory())
+            .build()
+        val jsonAdapter: JsonAdapter<ExceptionReport> = moshi.adapter(ExceptionReport::class.java)
+        return jsonAdapter.toJson(this)
     }
 
     companion object {
