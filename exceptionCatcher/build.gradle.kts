@@ -39,23 +39,25 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.work:work-runtime-ktx:2.9.0")
-
     implementation ("androidx.room:room-runtime:2.6.1")
     implementation("androidx.test.ext:junit-ktx:1.1.5")
-    testImplementation("junit:junit:4.13.2")
+
+    // Room
     kapt ("androidx.room:room-compiler:2.6.1")
     implementation ("androidx.room:room-ktx:2.6.1")
 
+    // Moshi
     implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
     kapt ("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
 
+    // LifeCycle
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation ("androidx.lifecycle:lifecycle-common-java8:2.7.0")
-
 
     // For Robolectric
     testImplementation ("org.robolectric:robolectric:4.10.3")
 
+    // Preferences
     implementation ("androidx.preference:preference-ktx:1.2.1")
 
     // For Mockito
@@ -63,12 +65,8 @@ dependencies {
     testImplementation ("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
-
-
-
     // AndroidX Test - for Android instrumentation tests
     testImplementation ("junit:junit:4.13.2")
-
     androidTestImplementation ("androidx.test:core:1.5.0")
     androidTestImplementation ("androidx.test.ext:junit:1.1.5")
     androidTestImplementation ("androidx.test:rules:1.5.0")

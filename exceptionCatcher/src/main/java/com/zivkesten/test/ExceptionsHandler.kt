@@ -1,4 +1,4 @@
-package com.zivkesten.test.util
+package com.zivkesten.test
 
 import android.content.Context
 import com.zivkesten.test.data.local.ExceptionStore
@@ -62,7 +62,7 @@ internal class ExceptionsHandler(
                         )
                     } catch (e: Exception) {
                         println("$TAG, Error sending report ${e.message}")
-                        storeException(e, e.additionalInfo(context))
+                        storeException(e, context.additionalInfo(e))
                     }
                 }
                 delay(interval)
@@ -78,7 +78,7 @@ internal class ExceptionsHandler(
 
     private fun handleError(exception: Throwable, context: Context) {
         coroutineScope.launch {
-            storeException(exception, exception.additionalInfo(context))
+            storeException(exception, context.additionalInfo(exception))
         }
     }
 

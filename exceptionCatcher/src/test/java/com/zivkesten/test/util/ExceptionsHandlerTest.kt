@@ -2,6 +2,7 @@ package com.zivkesten.test.util
 
 import com.nhaarman.mockitokotlin2.argThat
 import com.nhaarman.mockitokotlin2.mock
+import com.zivkesten.test.ExceptionsHandler
 import com.zivkesten.test.additionalInfoMock
 import com.zivkesten.test.data.local.ExceptionStore
 import com.zivkesten.test.data.remote.ExceptionRepository

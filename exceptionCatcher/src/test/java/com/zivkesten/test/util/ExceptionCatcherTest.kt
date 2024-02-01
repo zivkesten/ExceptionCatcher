@@ -1,6 +1,7 @@
 package com.zivkesten.test.util
 
 import android.app.Application
+import com.zivkesten.test.ExceptionCatcher
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test

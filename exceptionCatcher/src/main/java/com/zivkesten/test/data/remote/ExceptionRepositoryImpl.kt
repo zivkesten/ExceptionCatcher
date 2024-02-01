@@ -4,7 +4,7 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.zivkesten.test.data.remote.model.ExceptionReport
-import com.zivkesten.test.util.ExceptionCatcher
+import com.zivkesten.test.ExceptionCatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException

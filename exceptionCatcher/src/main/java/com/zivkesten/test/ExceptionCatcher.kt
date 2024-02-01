@@ -1,4 +1,4 @@
-package com.zivkesten.test.util
+package com.zivkesten.test
 
 import android.app.Activity
 import android.app.Application
@@ -20,7 +20,6 @@ import java.net.URL
 
 private const val DATABASE_NAME = "exception-database"
 private const val INTERVAL: Long = 1000 * 60
-
 /**
  * ExceptionCatcherInitializer is a utility object designed to initialize the ExceptionCatcher
  * in an Android application. It registers activity lifecycle callbacks to start and stop
@@ -46,7 +45,11 @@ object ExceptionCatcher {
     private lateinit var preferences: SharedPreferences
     fun initialize(application: Application) {
         this.application = application
-        preferences = application.applicationContext.getSharedPreferences("ip", Context.MODE_PRIVATE)
+        preferences = application.applicationContext.getSharedPreferences("ip",
+            Context.MODE_PRIVATE
+        )
+
+
         setExternalIpAddress(preferences.getString("ip", "") ?: "")
         val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
@@ -62,8 +65,9 @@ object ExceptionCatcher {
         )
 
         val exceptionRepository = ExceptionRepositoryImpl(
-            object : ConnectionFactory{
-                override fun createConnection(url: String) = (URL(url).openConnection() as HttpURLConnection)
+            object : ConnectionFactory {
+                override fun createConnection(url: String) =
+                    (URL(url).openConnection() as HttpURLConnection)
             })
 
         exceptionsHandler = ExceptionsHandler(
@@ -111,7 +115,7 @@ object ExceptionCatcher {
     fun handleException(exception: Throwable) {
         exceptionsHandler?.handleException(
             exception,
-            exception.additionalInfo(application.applicationContext)
+            application.applicationContext.additionalInfo(exception)
         )
     }
 
