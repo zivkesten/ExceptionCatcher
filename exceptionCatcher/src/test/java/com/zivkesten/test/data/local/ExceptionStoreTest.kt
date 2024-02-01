@@ -12,7 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ExceptionStoreImplTest {
+class ExceptionStoreTest {
 
     private lateinit var db: AppDatabase
     private lateinit var exceptionStore: ExceptionStoreImpl

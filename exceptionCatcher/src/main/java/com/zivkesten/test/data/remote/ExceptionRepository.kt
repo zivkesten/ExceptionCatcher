@@ -1,6 +1,6 @@
-package com.zivkesten.test.data.network
+package com.zivkesten.test.data.remote
 
-import com.zivkesten.test.data.network.model.ExceptionReport
+import com.zivkesten.test.data.remote.model.ExceptionReport
 import java.lang.Exception
 
 internal interface ExceptionRepository {

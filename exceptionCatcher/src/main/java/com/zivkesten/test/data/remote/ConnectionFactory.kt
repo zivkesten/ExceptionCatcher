@@ -1,4 +1,4 @@
-package com.zivkesten.test.data.network
+package com.zivkesten.test.data.remote
 
 import java.net.HttpURLConnection
 

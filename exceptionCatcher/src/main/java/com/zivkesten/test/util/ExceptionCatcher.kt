@@ -9,8 +9,8 @@ import android.os.Bundle
 import androidx.room.Room
 import com.zivkesten.test.data.local.AppDatabase
 import com.zivkesten.test.data.local.ExceptionStoreImpl
-import com.zivkesten.test.data.network.ConnectionFactory
-import com.zivkesten.test.data.network.ExceptionRepositoryImpl
+import com.zivkesten.test.data.remote.ConnectionFactory
+import com.zivkesten.test.data.remote.ExceptionRepositoryImpl
 import com.zivkesten.test.util.AdditionalInfoFactory.additionalInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

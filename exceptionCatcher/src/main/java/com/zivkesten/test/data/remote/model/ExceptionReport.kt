@@ -1,4 +1,4 @@
-package com.zivkesten.test.data.network.model
+package com.zivkesten.test.data.remote.model
 
 import com.zivkesten.test.domain.model.DomainException
 

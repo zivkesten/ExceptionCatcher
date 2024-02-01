@@ -4,8 +4,8 @@ import android.content.Context
 import com.zivkesten.test.data.local.ExceptionStore
 import com.zivkesten.test.data.local.ExceptionsHelper
 import com.zivkesten.test.data.mapper.ExceptionsMapper.toDomainException
-import com.zivkesten.test.data.network.ExceptionRepository
-import com.zivkesten.test.data.network.model.ExceptionReport
+import com.zivkesten.test.data.remote.ExceptionRepository
+import com.zivkesten.test.data.remote.model.ExceptionReport
 import com.zivkesten.test.domain.model.ExceptionAdditionalInfo
 import com.zivkesten.test.util.AdditionalInfoFactory.additionalInfo
 import kotlinx.coroutines.CoroutineScope

@@ -1,8 +1,8 @@
-package com.zivkesten.test.data.network
+package com.zivkesten.test.data.remote
 
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
-import com.zivkesten.test.data.network.model.ExceptionReport
+import com.zivkesten.test.data.remote.model.ExceptionReport
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
