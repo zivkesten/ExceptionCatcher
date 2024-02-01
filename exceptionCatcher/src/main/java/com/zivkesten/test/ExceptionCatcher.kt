@@ -20,7 +20,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 private const val DATABASE_NAME = "exception-database"
-private const val INTERVAL: Long = 2000//1000 * 60
+private const val INTERVAL: Long = 1000 * 60
 /**
  * ExceptionCatcherInitializer is a utility object designed to initialize the ExceptionCatcher
  * in an Android application. It registers activity lifecycle callbacks to start and stop
