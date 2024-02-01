@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.zivkesten.test.additionalInfoMock
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.*
@@ -36,8 +37,8 @@ class ExceptionStoreTest {
     fun storeException_savesDataCorrectly() = runBlocking {
         populateExceptions(1)
 
-        val storedException = db.exceptionDao().getAllExceptions().firstOrNull()
-        assertEquals("Test Exception", storedException?.message)
+        val storedException = db.exceptionDao().getAllExceptions().first().first()
+        assertEquals("Test Exception", storedException.message)
     }
 
     @Test
@@ -46,7 +47,7 @@ class ExceptionStoreTest {
         populateExceptions(exceptionsCount)
 
         // Retrieve Exceptions
-        val allExceptions = exceptionStore.getAllExceptions()
+        val allExceptions = exceptionStore.storedExceptions().first()
 
         // Assert all exceptions stored
         assertTrue(allExceptions.size == exceptionsCount)
@@ -58,7 +59,7 @@ class ExceptionStoreTest {
 
         exceptionStore.deleteAllExceptions()
 
-        val allExceptions = exceptionStore.getAllExceptions()
+        val allExceptions = exceptionStore.storedExceptions().first()
 
         assertEquals(0, allExceptions.size)
     }

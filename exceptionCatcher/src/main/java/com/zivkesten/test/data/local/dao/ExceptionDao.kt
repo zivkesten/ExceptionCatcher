@@ -4,14 +4,15 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.zivkesten.test.data.local.entities.ExceptionEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
-internal interface ExceptionDao {
+interface ExceptionDao {
     @Insert
     suspend fun insertException(exceptionEntity: ExceptionEntity): Long
 
     @Query("SELECT * FROM ExceptionEntity")
-    suspend fun getAllExceptions(): List<ExceptionEntity>
+    fun getAllExceptions(): Flow<List<ExceptionEntity>>
 
     @Query("DELETE FROM ExceptionEntity")
     suspend fun deleteAllExceptions()

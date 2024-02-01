@@ -11,9 +11,8 @@ internal class ExceptionStoreImpl(private val db: AppDatabase): ExceptionStore {
         }
     }
 
-    override suspend fun getAllExceptions() = withContext(Dispatchers.IO) {
-        db.exceptionDao().getAllExceptions()
-    }
+    override fun storedExceptions() = db.exceptionDao().getAllExceptions()
+
 
     override suspend fun deleteAllExceptions() = withContext(Dispatchers.IO) {
         db.exceptionDao().deleteAllExceptions()

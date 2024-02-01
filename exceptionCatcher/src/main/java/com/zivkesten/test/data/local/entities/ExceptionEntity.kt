@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity
-internal data class ExceptionEntity(
+data class ExceptionEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val timestamp: Long,
     val message: String?,
