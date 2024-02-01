@@ -34,13 +34,18 @@ android {
 }
 
 dependencies {
-
+    // Androidx
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.work:work-runtime-ktx:2.9.0")
-    implementation ("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.test.ext:junit-ktx:1.1.5")
+
+    // Material
+    implementation("com.google.android.material:material:1.11.0")
+
+    // Preferences
+    implementation ("androidx.preference:preference-ktx:1.2.1")
 
     // Room
     kapt ("androidx.room:room-compiler:2.6.1")
@@ -54,13 +59,10 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation ("androidx.lifecycle:lifecycle-common-java8:2.7.0")
 
-    // For Robolectric
+    // Robolectric
     testImplementation ("org.robolectric:robolectric:4.10.3")
 
-    // Preferences
-    implementation ("androidx.preference:preference-ktx:1.2.1")
-
-    // For Mockito
+    // Mockito
     testImplementation ("org.mockito:mockito-core:3.1.0")
     testImplementation ("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
