@@ -10,7 +10,7 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
 
-class ExceptionRepositoryImpl(
+internal class ExceptionRepositoryImpl(
     private val connectionFactory: ConnectionFactory,
     private val isEmulator: Boolean? = null // this is for similar web testers
 ): ExceptionRepository {

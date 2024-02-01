@@ -16,7 +16,7 @@ private const val PORTRAIT = "Portrait"
 private const val NO_MESSAGE_PROVIDED = "NO Message provided"
 private const val UNKNOWN = "Unknown"
 
-object AdditionalInfoFactory {
+internal object AdditionalInfoFactory {
     fun Throwable.additionalInfo(context: Context): ExceptionAdditionalInfo {
         val deviceModel = android.os.Build.MODEL
         val osVersion = android.os.Build.VERSION.RELEASE

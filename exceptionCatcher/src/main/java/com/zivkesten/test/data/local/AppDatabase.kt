@@ -6,6 +6,6 @@ import com.zivkesten.test.data.local.dao.ExceptionDao
 import com.zivkesten.test.data.local.entities.ExceptionEntity
 
 @Database(entities = [ExceptionEntity::class], version = 1)
-abstract class AppDatabase : RoomDatabase() {
+internal abstract class AppDatabase : RoomDatabase() {
     abstract fun exceptionDao(): ExceptionDao
 }

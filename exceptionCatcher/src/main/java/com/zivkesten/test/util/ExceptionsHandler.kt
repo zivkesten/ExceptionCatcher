@@ -15,7 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-class ExceptionsHandler(
+internal class ExceptionsHandler(
     private val coroutineScope: CoroutineScope,
     private val exceptionStore: ExceptionStore,
     private val exceptionRepository: ExceptionRepository

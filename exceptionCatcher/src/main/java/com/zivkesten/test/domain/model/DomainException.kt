@@ -1,6 +1,6 @@
 package com.zivkesten.test.domain.model
 
-data class DomainException(
+internal data class DomainException(
     val timestamp: Long,
     val message: String?,
     val deviceModel: String,

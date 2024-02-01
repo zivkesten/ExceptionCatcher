@@ -3,7 +3,7 @@ package com.zivkesten.test.data.mapper
 import com.zivkesten.test.data.local.entities.ExceptionEntity
 import com.zivkesten.test.domain.model.DomainException
 
-object ExceptionsMapper {
+internal object ExceptionsMapper {
     fun ExceptionEntity.toDomainException() = DomainException(
         timestamp = this.timestamp,
         message = this.message,

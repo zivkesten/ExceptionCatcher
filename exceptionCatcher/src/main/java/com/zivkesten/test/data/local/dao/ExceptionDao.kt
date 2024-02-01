@@ -6,7 +6,7 @@ import androidx.room.Query
 import com.zivkesten.test.data.local.entities.ExceptionEntity
 
 @Dao
-interface ExceptionDao {
+internal interface ExceptionDao {
     @Insert
     suspend fun insertException(exceptionEntity: ExceptionEntity): Long
 
