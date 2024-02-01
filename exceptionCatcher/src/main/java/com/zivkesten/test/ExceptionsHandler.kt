@@ -11,6 +11,7 @@ import com.zivkesten.test.util.AdditionalInfoFactory.additionalInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,12 +26,13 @@ internal class ExceptionsHandler(
 ) {
     private val TAG = ExceptionsHandler::class.java.simpleName
     private var job: Job? = null
-    private var storedExceptions: StateFlow<List<DomainException>> = MutableStateFlow(emptyList())
+    private var _storedExceptions: MutableStateFlow<List<DomainException>> = MutableStateFlow(emptyList())
+    private var storedExceptions: StateFlow<List<DomainException>> = _storedExceptions
 
     init {
         // We update the stored exceptions reactively, listening to changes in the data base,
         coroutineScope.launch(Dispatchers.IO) {
-            storedExceptions = exceptionRepository.storedExceptions().stateIn(coroutineScope)
+            storedExceptions = exceptionRepository.storedExceptionsFlow().stateIn(coroutineScope)
         }
     }
 
@@ -45,13 +47,22 @@ internal class ExceptionsHandler(
         additionalInfo: ExceptionAdditionalInfo
     ): Long = exceptionRepository.storeException(ExceptionsHelper.create(exception, additionalInfo))
 
-    fun scheduleRegularReports(context: Context, interval: Long = 1000 * 60) {
+    fun initilizeServerReports(context: Context, interval: Long = 1000 * 60) {
+        coroutineScope.launch {
+            _storedExceptions.value = exceptionRepository.storedExceptions()
+            scheduleRegularReports(context, interval)
+        }
+    }
+
+    private fun scheduleRegularReports(context: Context, interval: Long = 1000 * 60) {
+        job?.cancelChildren()
         job = coroutineScope.launch {
             while (isActive) {
 
                 // We avoided touching the dataBase and committing an IO operation Every minute
                 // by keeping an updated list that observes the dataBase for changes
                 if (storedExceptions.value.isNotEmpty()) {
+
                     try {
                         val report = ExceptionReport.create(storedExceptions.value)
                         exceptionRepository.sendExceptionReport(

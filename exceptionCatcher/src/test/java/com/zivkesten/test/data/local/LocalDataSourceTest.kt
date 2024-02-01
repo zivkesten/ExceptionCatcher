@@ -13,7 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ExceptionsLocalDataSourceTest {
+class LocalDataSourceTest {
 
     private lateinit var db: AppDatabase
     private lateinit var exceptionStore: LocalDataSourceImpl
@@ -37,17 +37,29 @@ class ExceptionsLocalDataSourceTest {
     fun storeException_savesDataCorrectly() = runBlocking {
         populateExceptions(1)
 
-        val storedException = db.exceptionDao().getAllExceptions().first().first()
+        val storedException = db.exceptionDao().exceptionsFlow().first().first()
         assertEquals("Test Exception", storedException.message)
     }
 
     @Test
-    fun getAllExceptions_retrievesDataCorrectly() = runBlocking {
+    fun storedExceptionsFlow_retrievesDataCorrectly() = runBlocking {
         val exceptionsCount = 10
         populateExceptions(exceptionsCount)
 
         // Retrieve Exceptions
-        val allExceptions = exceptionStore.storedExceptions().first()
+        val allExceptions = exceptionStore.storedExceptionsFlow().first()
+
+        // Assert all exceptions stored
+        assertTrue(allExceptions.size == exceptionsCount)
+    }
+
+    @Test
+    fun storedExceptions_retrievesDataCorrectly() = runBlocking {
+        val exceptionsCount = 10
+        populateExceptions(exceptionsCount)
+
+        // Retrieve Exceptions
+        val allExceptions = exceptionStore.storedExceptions()
 
         // Assert all exceptions stored
         assertTrue(allExceptions.size == exceptionsCount)
@@ -59,7 +71,7 @@ class ExceptionsLocalDataSourceTest {
 
         exceptionStore.deleteAllExceptions()
 
-        val allExceptions = exceptionStore.storedExceptions().first()
+        val allExceptions = exceptionStore.storedExceptionsFlow().first()
 
         assertEquals(0, allExceptions.size)
     }

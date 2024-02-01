@@ -4,8 +4,9 @@ import com.zivkesten.test.data.local.entities.ExceptionEntity
 import kotlinx.coroutines.flow.Flow
 
 
-internal interface ExceptionsLocalDataSource {
+internal interface LocalDataSource {
     suspend fun storeException(exception: ExceptionEntity): Long
-    fun storedExceptions(): Flow<List<ExceptionEntity>>
+    fun storedExceptionsFlow(): Flow<List<ExceptionEntity>>
+    suspend fun storedExceptions(): List<ExceptionEntity>
     suspend fun deleteAllExceptions()
 }

@@ -70,7 +70,7 @@ object ExceptionCatcher {
                 override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                     if (activeActivities++ == 0) {
                         // App enters the foreground
-                        exceptionsHandler?.scheduleRegularReports(
+                        exceptionsHandler?.initilizeServerReports(
                             application.applicationContext,
                             INTERVAL
                         )

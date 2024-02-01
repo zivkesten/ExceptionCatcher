@@ -6,7 +6,9 @@ import com.zivkesten.test.domain.model.DomainException
 import kotlinx.coroutines.flow.Flow
 
 internal interface ExceptionsRepository {
-    fun storedExceptions(): Flow<List<DomainException>>
+    fun storedExceptionsFlow(): Flow<List<DomainException>>
+    suspend fun storedExceptions(): List<DomainException>
+
     suspend fun storeException(exception: ExceptionEntity): Long
     suspend fun sendExceptionReport(
         report: ExceptionReport,

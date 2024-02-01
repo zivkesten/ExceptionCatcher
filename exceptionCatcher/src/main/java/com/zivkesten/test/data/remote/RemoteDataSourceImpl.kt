@@ -13,7 +13,7 @@ import java.net.HttpURLConnection
 internal class RemoteDataSourceImpl(
     private val connectionFactory: ConnectionFactory,
     private val isEmulator: Boolean? = null // this is for similar web testers
-): ExceptionRemoteDataSource {
+): RemoteDataSource {
     private val TAG = RemoteDataSourceImpl::class.java.simpleName
 
     override suspend fun sendExceptionReport(

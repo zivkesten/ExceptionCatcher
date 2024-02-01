@@ -6,8 +6,8 @@ import com.zivkesten.test.ExceptionsHandler
 import com.zivkesten.test.additionalInfoMock
 import com.zivkesten.test.data.ExceptionRepositoryImpl
 import com.zivkesten.test.data.ExceptionsRepository
-import com.zivkesten.test.data.local.ExceptionsLocalDataSource
-import com.zivkesten.test.data.remote.ExceptionRemoteDataSource
+import com.zivkesten.test.data.local.LocalDataSource
+import com.zivkesten.test.data.remote.RemoteDataSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -20,8 +20,8 @@ class ExceptionsHandlerTest {
 
     private val testScope = TestScope()
     private lateinit var handler: ExceptionsHandler
-    private lateinit var localDataSource: ExceptionsLocalDataSource
-    private lateinit var remoteDataSource: ExceptionRemoteDataSource
+    private lateinit var localDataSource: LocalDataSource
+    private lateinit var remoteDataSource: RemoteDataSource
     private lateinit var exceptionsRepository: ExceptionsRepository
 
     @Before

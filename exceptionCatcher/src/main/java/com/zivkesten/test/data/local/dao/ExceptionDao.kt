@@ -12,7 +12,10 @@ interface ExceptionDao {
     suspend fun insertException(exceptionEntity: ExceptionEntity): Long
 
     @Query("SELECT * FROM ExceptionEntity")
-    fun getAllExceptions(): Flow<List<ExceptionEntity>>
+    fun exceptionsFlow(): Flow<List<ExceptionEntity>>
+
+    @Query("SELECT * FROM ExceptionEntity")
+    fun exceptions(): List<ExceptionEntity>
 
     @Query("DELETE FROM ExceptionEntity")
     suspend fun deleteAllExceptions()

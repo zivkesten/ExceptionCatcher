@@ -3,7 +3,7 @@ package com.zivkesten.test.data.remote
 import com.zivkesten.test.data.remote.model.ExceptionReport
 import java.lang.Exception
 
-internal interface ExceptionRemoteDataSource {
+internal interface RemoteDataSource {
     suspend fun sendExceptionReport(
         exceptionReport: ExceptionReport,
         remoteIpForServer: String?,

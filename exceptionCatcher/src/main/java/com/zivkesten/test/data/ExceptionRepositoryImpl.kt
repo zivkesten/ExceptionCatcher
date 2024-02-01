@@ -1,22 +1,27 @@
 package com.zivkesten.test.data
 
-import com.zivkesten.test.data.local.ExceptionsLocalDataSource
+import com.zivkesten.test.data.local.LocalDataSource
 import com.zivkesten.test.data.local.entities.ExceptionEntity
 import com.zivkesten.test.data.mapper.ExceptionsMapper.toDomainException
-import com.zivkesten.test.data.remote.ExceptionRemoteDataSource
+import com.zivkesten.test.data.remote.RemoteDataSource
 import com.zivkesten.test.data.remote.model.ExceptionReport
 import kotlinx.coroutines.flow.map
 import java.lang.Exception
 
 internal class ExceptionRepositoryImpl(
-    private val localDataSource: ExceptionsLocalDataSource,
-    private val remoteDataSource: ExceptionRemoteDataSource
+    private val localDataSource: LocalDataSource,
+    private val remoteDataSource: RemoteDataSource
 ): ExceptionsRepository {
-    override fun storedExceptions() = localDataSource.storedExceptions().map {
+    override fun storedExceptionsFlow() = localDataSource.storedExceptionsFlow().map {
         exceptions -> exceptions.map {
             it.toDomainException()
         }
     }
+
+    override suspend fun storedExceptions() = localDataSource.storedExceptions().map {
+        it.toDomainException()
+    }
+
     override suspend fun storeException(exception: ExceptionEntity) = localDataSource.storeException(exception)
     override suspend fun sendExceptionReport(
         report: ExceptionReport,
